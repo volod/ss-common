@@ -90,6 +90,14 @@ CASES: dict[str, tuple[Mutation, str]] = {
         _set_prop("tags", "items", {"logicalType": "array", "physicalType": "array"}),
         "is not a scalar kind",
     ),
+    "object items with properties": (
+        _set_prop(
+            "tags",
+            "items",
+            {"logicalType": "object", "physicalType": "json", "properties": [{"name": "x"}]},
+        ),
+        "nested object properties",
+    ),
     "nested object": (
         _set_prop("decoded_object", "properties", [{"name": "x", "logicalType": "string"}]),
         "nested object properties",

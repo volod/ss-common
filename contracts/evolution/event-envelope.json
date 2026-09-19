@@ -1,0 +1,132 @@
+{
+  "binding": {
+    "mqttTopic": "ss/v1/site/{site_id}/zone/{zone_id}/event/{modality}",
+    "timeBase": "utc"
+  },
+  "contractId": "event-envelope",
+  "fields": {
+    "artifact_uri": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 6,
+      "required": false
+    },
+    "confidence": {
+      "logicalType": "number",
+      "options": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "payload": {
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 5,
+      "required": false
+    },
+    "sensor_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "ts": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "zone_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 2,
+      "required": true
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "8ffd029c124668bdcca350612ada91aa304e873f12e950f89cf69affe003df15"
+  },
+  "history": [
+    {
+      "binding": {
+        "mqttTopic": "ss/v1/site/{site_id}/zone/{zone_id}/event/{modality}",
+        "timeBase": "utc"
+      },
+      "contractId": "event-envelope",
+      "fields": {
+        "artifact_uri": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 6,
+          "required": false
+        },
+        "confidence": {
+          "logicalType": "number",
+          "options": {
+            "maximum": 1,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "payload": {
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 5,
+          "required": false
+        },
+        "sensor_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "ts": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "zone_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "8ffd029c124668bdcca350612ada91aa304e873f12e950f89cf69affe003df15"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

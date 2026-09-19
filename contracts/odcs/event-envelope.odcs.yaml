@@ -1,0 +1,84 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: event-envelope
+version: 1.0.0
+status: active
+name: Site event envelope
+domain: site
+description:
+  purpose: >-
+    A sensor event from any modality submitted to the site event ingest: when and where it
+    happened, which sensor saw it, how confident it is, and an optional artifact. The
+    modality is the last topic level (and the path parameter of POST /api/v1/events).
+schema:
+  - name: event_envelope
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          mqttTopic: ss/v1/site/{site_id}/zone/{zone_id}/event/{modality}
+      - property: schemaGeneration
+        value:
+          pydantic: {className: EventEnvelope}
+          avro: {namespace: ss.contracts.site, recordName: EventEnvelope}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: EventEnvelope
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: ts
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Event time.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: zone_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Site zone the event belongs to.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: sensor_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Reporting sensor id.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: confidence
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Detection confidence.
+        logicalTypeOptions: {minimum: 0, maximum: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: payload
+        logicalType: object
+        physicalType: json
+        required: false
+        description: Modality-specific details; empty when unset.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: artifact_uri
+        logicalType: string
+        physicalType: string
+        required: false
+        description: "Path of a stored artifact (clip, image, audio) inside the allowed index paths."
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}

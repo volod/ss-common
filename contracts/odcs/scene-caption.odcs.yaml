@@ -1,0 +1,118 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: scene-caption
+version: 1.0.0
+status: active
+name: Scene caption
+domain: site
+description:
+  purpose: >-
+    A caption of one keyframe from a live or mission video stream, with the structured scene
+    facts when the vision-language model produced them and the GPS position when known. One
+    row of the scene_timeline table, written by RtspCaptioner.
+schema:
+  - name: scene_caption
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          modality: camera
+          mqttTopic: ss/v1/site/{site_id}/mission/{mission_id}/scene-caption
+      - property: schemaGeneration
+        value:
+          pydantic: {className: SceneCaption}
+          avro: {namespace: ss.contracts.site, recordName: SceneCaption}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: SceneCaption
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: mission_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Mission or live-stream session the frame belongs to.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: frame_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Keyframe id within the mission.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: gps_lat
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Camera latitude.
+        logicalTypeOptions: {minimum: -90, maximum: 90}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: gps_lon
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Camera longitude.
+        logicalTypeOptions: {minimum: -180, maximum: 180}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: gps_alt
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Camera altitude.
+        customProperties:
+          - property: ssBinding
+            value: {unit: m, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: t_sec
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Frame offset into the stream.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: s, timeBase: media}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: caption
+        logicalType: string
+        physicalType: string
+        required: false
+        description: Caption text; unset when no captioner answered.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: facts_json
+        logicalType: object
+        physicalType: json
+        required: false
+        description: Structured scene facts from the vision-language model.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: created_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the row was written.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}}

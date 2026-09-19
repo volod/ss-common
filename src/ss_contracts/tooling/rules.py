@@ -144,9 +144,11 @@ def _items_errors(prop: Mapping[str, Any]) -> list[str]:
         return ["array needs an 'items' mapping"]
     kind = canonical_kind(str(items.get("physicalType", "")))
     if kind not in ITEM_KINDS:
-        return [f"items.physicalType '{items.get('physicalType')}' is not a scalar kind"]
+        return [f"items.physicalType '{items.get('physicalType')}' is not a scalar kind or json"]
     if not kind_compatible(str(items.get("logicalType", "")), kind):
         return [f"items.logicalType '{items.get('logicalType')}' cannot carry '{kind}'"]
+    if kind == "json" and items.get("properties"):
+        return ["nested object properties are not supported; use a free-form object"]
     return []
 
 

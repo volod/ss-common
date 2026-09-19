@@ -10,6 +10,7 @@ from typing import Any
 import fastavro
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pydantic
 import pytest
 from google.protobuf import descriptor_pb2
 
@@ -17,7 +18,7 @@ from ss_contracts.tooling.gen import proto
 from ss_contracts.tooling.generate import generate
 from ss_contracts.tooling.registry import Registry
 
-from ._contract_fixture import prop
+from ._contract_fixture import custom, prop
 from .conftest import EditContract
 
 VENV_BIN = pathlib.Path(sys.executable).parent
@@ -40,7 +41,10 @@ def _import_models(registry: Registry) -> Any:
         return importlib.import_module(registry.models_dir.name)
     finally:
         sys.path.remove(str(registry.models_dir.parent))
-        sys.modules.pop(registry.models_dir.name, None)
+        # Drop the package and its submodules so a later import sees regenerated models.
+        name = registry.models_dir.name
+        for module in [m for m in sys.modules if m == name or m.startswith(f"{name}.")]:
+            del sys.modules[module]
 
 
 def _golden(registry: Registry, contract_id: str, name: str) -> dict[str, Any]:
@@ -238,3 +242,64 @@ def test_missing_generation_hints_stop_generation(
         "sample-detection [proto]: field 'label': fieldGeneration.proto.fieldNumber is missing"
     ]
     assert not registry.generated_dir.exists()
+
+
+def test_arrays_of_free_form_objects_reach_every_format(
+    registry: Registry, edit_contract: EditContract
+) -> None:
+    def add_events(doc: dict[str, Any]) -> None:
+        doc["schema"][0]["properties"].append(
+            {
+                "name": "events",
+                "logicalType": "array",
+                "physicalType": "array",
+                "required": False,
+                "description": "Free-form event objects.",
+                "items": {"logicalType": "object", "physicalType": "json"},
+                "customProperties": [
+                    {"property": "fieldGeneration", "value": {"proto": {"fieldNumber": 14}}}
+                ],
+            }
+        )
+
+    edit_contract("sample-reading", add_events)
+    report = generate(registry)
+    assert report.ok, report.errors
+    out = registry.generated_dir
+    model = _import_models(registry).CONTRACTS["sample-reading"]
+    events = [{"event": "alarm", "energy_ratio": 0.5}, {"nested": {"k": [1, 2]}}]
+    message = model.model_validate(
+        {
+            "dev_eui": "a" * 16,
+            "received_at": "2026-05-01T12:00:00Z",
+            "f_cnt": 1,
+            "tags": [],
+            "events": events,
+        }
+    )
+    assert message.model_dump(mode="json", exclude_unset=True)["events"] == events
+    with pytest.raises(pydantic.ValidationError):
+        model.model_validate({**message.model_dump(), "events": ["alarm"]})
+    schema = json.loads((out / "jsonschema" / "sample-reading.schema.json").read_text())
+    assert schema["properties"]["events"]["anyOf"][0]["items"]["type"] == "object"
+    assert (
+        "repeated google.protobuf.Struct events = 14;"
+        in (out / "proto" / "sample_reading.proto").read_text()
+    )
+    avro = json.loads((out / "avro" / "sample-reading.avsc").read_text())
+    avro_events = next(f for f in avro["fields"] if f["name"] == "events")
+    assert avro_events["type"] == ["null", {"type": "array", "items": "string"}]
+    arrow = pq.read_schema(out / "parquet" / "sample-reading.schema.parquet")
+    assert arrow.field("events").type == pa.large_list(pa.large_string())
+
+
+def test_package_all_follows_ruff_order(registry: Registry, edit_contract: EditContract) -> None:
+    def rename(doc: dict[str, Any]) -> None:
+        generation = custom(doc["schema"][0], "schemaGeneration")
+        generation["pydantic"]["className"] = "AlphaReading"
+
+    edit_contract("sample-reading", rename)
+    assert generate(registry, ["pydantic"]).ok
+    command = [VENV_BIN / "ruff", "check", "--select", "RUF022", str(registry.models_dir)]
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stdout

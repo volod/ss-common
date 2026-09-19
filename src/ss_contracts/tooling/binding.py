@@ -30,7 +30,7 @@ _UNIT_RE = re.compile(r"^[A-Za-z0-9%/.*^\[\]{}'-]+$")
 _TOPIC_LEVEL_RE = re.compile(r"^([A-Za-z0-9_.-]+|\+|\{[a-z][a-z0-9_]*\})$")
 
 
-def _topic_errors(topic: str) -> list[str]:
+def topic_errors(topic: str) -> list[str]:
     if not topic.startswith("ss/"):
         return [f"mqttTopic '{topic}' must start with 'ss/'"]
     levels = topic.split("/")
@@ -53,7 +53,7 @@ def _value_errors(key: str, value: str) -> list[str]:
     if key == "unit" and not _UNIT_RE.match(value):
         return [f"unit '{value}' is not a UCUM-style unit code"]
     if key == "mqttTopic":
-        return _topic_errors(value)
+        return topic_errors(value)
     return []
 
 

@@ -1,0 +1,214 @@
+{
+  "binding": {
+    "modality": "camera",
+    "mqttTopic": "ss/v1/site/{site_id}/mission/{mission_id}/scene-caption"
+  },
+  "contractId": "scene-caption",
+  "fields": {
+    "caption": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 7,
+      "required": false
+    },
+    "created_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 9,
+      "required": true
+    },
+    "facts_json": {
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 8,
+      "required": false
+    },
+    "frame_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "gps_alt": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "m"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 5,
+      "required": false
+    },
+    "gps_lat": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "deg"
+      },
+      "logicalType": "number",
+      "options": {
+        "maximum": 90,
+        "minimum": -90
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 3,
+      "required": false
+    },
+    "gps_lon": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "deg"
+      },
+      "logicalType": "number",
+      "options": {
+        "maximum": 180,
+        "minimum": -180
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 4,
+      "required": false
+    },
+    "mission_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "t_sec": {
+      "binding": {
+        "timeBase": "media",
+        "unit": "s"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 6,
+      "required": false
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "13429e0474fb04bce6192660e8ac47fed57ba45c48c2bd7b5e802a1196d61476"
+  },
+  "history": [
+    {
+      "binding": {
+        "modality": "camera",
+        "mqttTopic": "ss/v1/site/{site_id}/mission/{mission_id}/scene-caption"
+      },
+      "contractId": "scene-caption",
+      "fields": {
+        "caption": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 7,
+          "required": false
+        },
+        "created_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 9,
+          "required": true
+        },
+        "facts_json": {
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 8,
+          "required": false
+        },
+        "frame_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "gps_alt": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "m"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": false
+        },
+        "gps_lat": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 90,
+            "minimum": -90
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 3,
+          "required": false
+        },
+        "gps_lon": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 180,
+            "minimum": -180
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 4,
+          "required": false
+        },
+        "mission_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "t_sec": {
+          "binding": {
+            "timeBase": "media",
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 6,
+          "required": false
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "13429e0474fb04bce6192660e8ac47fed57ba45c48c2bd7b5e802a1196d61476"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

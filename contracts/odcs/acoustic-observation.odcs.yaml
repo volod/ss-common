@@ -1,0 +1,96 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: acoustic-observation
+version: 1.0.0
+status: active
+name: Acoustic observation
+domain: site
+description:
+  purpose: >-
+    One analysed audio chunk from a camera's live stream: level, silence, classified acoustic
+    events, and a speech transcript. Produced by SoundAnalyzer for each chunk.
+schema:
+  - name: acoustic_observation
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          modality: acoustic
+          mqttTopic: ss/v1/site/{site_id}/camera/{camera}/acoustic
+      - property: schemaGeneration
+        value:
+          pydantic: {className: AcousticObservation}
+          avro: {namespace: ss.contracts.site, recordName: AcousticObservation}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: AcousticObservation
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: camera
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Camera whose audio stream was analysed.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: recorded_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the chunk was analysed.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: chunk_duration_sec
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Chunk length.
+        logicalTypeOptions: {exclusiveMinimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: s}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: speech_transcript
+        logicalType: string
+        physicalType: string
+        required: false
+        description: Speech recognized in the chunk; unset when none.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: acoustic_events
+        logicalType: array
+        physicalType: array
+        required: true
+        description: "Classified acoustic events, each an object with an 'event' label and an 'energy_ratio' in 0-1; empty when silent."
+        items: {logicalType: object, physicalType: json}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: rms_db
+        logicalType: number
+        physicalType: double
+        required: true
+        description: RMS level of the chunk in dB full scale.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: silence
+        logicalType: boolean
+        physicalType: bool
+        required: true
+        description: The chunk is below the silence threshold.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}

@@ -5,7 +5,7 @@
 | Path | Holds |
 | --- | --- |
 | `src/ss_contracts/` | Contract package: `base` (runtime model base and wire types), committed `models/`, and `tooling/` (the `ss-contracts` CLI); see [contracts](contracts.md) |
-| `contracts/` | Contract registry, ODCS sources, evolution baselines; `contracts/generated/` is gitignored |
+| `contracts/` | Contract registry, ODCS sources, MQTT topic map (`topics.yaml`), evolution baselines; `contracts/generated/` is gitignored |
 | `src/ss_kit/` | Runtime-helper package: `package_version()`, `py.typed`, and `ss_kit.quality` (spec-plan, doc-link, plan-status, and footprint gates) |
 | `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree and golden messages) |
 | `scripts/shared/common.sh` | `ssc_load_env`: `.env`, `DATA_DIR`, uv and tool caches, uv link mode |

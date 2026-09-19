@@ -25,9 +25,10 @@ PHYSICAL_ALIASES: dict[str, str] = {
     "bool": "boolean",
 }
 
-# Kinds an array may hold. Nested arrays and free-form objects inside arrays are not supported.
+# Kinds an array may hold: every scalar kind and free-form objects. Nested arrays and objects
+# with declared properties are not supported.
 ITEM_KINDS: frozenset[str] = frozenset(
-    {"string", "bytes", "int", "long", "float", "double", "boolean", "timestamp", "date"}
+    {"string", "bytes", "int", "long", "float", "double", "boolean", "timestamp", "date", "json"}
 )
 
 NUMERIC_KINDS: frozenset[str] = frozenset({"int", "long", "float", "double"})

@@ -6,15 +6,17 @@ future Rust or C++ consumers), and Avro and Parquet (datasets and benchmarks) by
 The generic part of fl-op's contract tooling was ported; its optimization model, xopt bindings,
 profiles, plan contract, domain packs, and Elasticsearch generator were not.
 
-The registry holds no contracts yet: the site-event contracts and the mission and model-artifact
-manifests are the next `shared-foundation` tasks in the staging repository's plan. The tooling is
-exercised end to end over the sample tree in `tests/fixtures/contracts/sample/`.
+The registry holds the eight [site-event contracts](#site-event-contracts) and the
+[MQTT topic map](#topic-map) that binds `ss/v1/...` topics to them. The mission and
+model-artifact manifests are the next `shared-foundation` task in the staging repository's plan.
+The tooling is exercised end to end over the sample tree in `tests/fixtures/contracts/sample/`.
 
 ## Layout
 
 | Path | Holds | Committed |
 | --- | --- | --- |
 | `contracts/registry.yaml` | Registry: every contract, its ODCS file and owner, and the output paths | yes |
+| `contracts/topics.yaml` | [Topic map](#topic-map): `ss/v1/...` pattern to contract, QoS, and retain | yes |
 | `contracts/odcs/<id>.odcs.yaml` | One ODCS contract per message | yes |
 | `contracts/evolution/<id>.json` | Reviewed baseline: latest snapshot plus `history` | yes |
 | `src/ss_contracts/models/` | Generated Pydantic models, one module per contract, and `CONTRACTS` | yes, drift-gated |
@@ -65,12 +67,15 @@ proto3 reserved words, Pydantic attributes, or type names the generated module u
 | `timestamp` | `timestamp` | `ContractTimestamp` | string, RFC 3339 with offset | `google.protobuf.Timestamp` | `long` `timestamp-micros` | `timestamp[us, tz=UTC]` |
 | `date` | `date` | `datetime.date` | string, date | `string` (ISO 8601) | `int` `date` | `date32` |
 | `object` | `json` | `dict[str, Any]` | object | `google.protobuf.Struct` | `string` (JSON text) | `large_string` (JSON text) |
-| `array` | `array` + scalar `items` | `list[T]` | array | `repeated T` | `array` | `large_list<T>` |
+| `array` | `array` + scalar or `json` `items` | `list[T]` | array | `repeated T` | `array` | `large_list<T>` |
 
 An optional field (`required: false`) is `T | None = None`, a `["null", T]` union, a nullable
 Arrow field, and a proto3 `optional` scalar; proto message types and repeated fields have no
-separate null state, so an optional object arrives unset and an optional array empty. Nested
-objects with declared `properties`, nested arrays, and `time` are rejected.
+separate null state, so an optional object arrives unset and an optional array empty. An array
+may hold free-form objects (`items: {logicalType: object, physicalType: json}`): `list[dict[str,
+Any]]`, `repeated google.protobuf.Struct`, an Avro array of JSON strings, and an Arrow
+`large_list<large_string>`. Nested objects with declared `properties` (as a field or as array
+items), nested arrays, and `time` are rejected.
 
 `logicalTypeOptions` map to Pydantic and JSON Schema constraints: strings `minLength`,
 `maxLength`, `pattern`, `format` (schema annotation); numbers and integers `minimum`, `maximum`,
@@ -108,7 +113,7 @@ metadata in Arrow and the Parquet descriptor.
 
 | Command | Does |
 | --- | --- |
-| `make contracts` | `ss-contracts validate` (registry, ODCS schema and rules, hints for every format, golden round trips), then `ss-contracts generate --check` (drift gate) |
+| `make contracts` | `ss-contracts validate` (registry, ODCS schema and rules, hints for every format, golden round trips, topic map), then `ss-contracts generate --check` (drift gate) |
 | `make contracts-gen` | `ss-contracts generate`: models, then JSON Schema, Avro, Protobuf (compiled), and Parquet |
 | `make evolution-check` | `ss-contracts evolution-check` |
 | `make evolution-freeze` | `ss-contracts evolution-freeze`, after review |
@@ -117,8 +122,8 @@ metadata in Arrow and the Parquet descriptor.
 before regeneration. The CLI is `ss-contracts [--root DIR] validate | generate [--format FMT]...
 [--check] | evolution-check | evolution-freeze`; `--root` defaults to `$SS_CONTRACTS_ROOT`, else
 `contracts/` under the project root. It logs through `logging` like the quality gates and exits 0
-clean, 1 on findings, and 2 on an unusable registry or a missing `tooling` extra, which it names
-with the install hint instead of a traceback.
+clean, 1 on findings, and 2 on an unusable registry or topic map or a missing `tooling` extra,
+which it names with the install hint instead of a traceback.
 
 ## Generation
 
@@ -146,6 +151,78 @@ With `goldenDir` set, every registered contract needs `<goldenDir>/<id>/` with a
 `model_dump(mode="json", exclude_unset=True)` equals the file, so fixtures are canonical
 (timestamps with `Z`, standard base64). `*.invalid.json` counter-examples must be rejected by
 both. A golden directory without a contract fails.
+
+## Site-event contracts
+
+The messages that cross service boundaries at a site, each derived field for field from the
+class that produces it today in the staging repository. All are version `1.0.0`, `active`, domain
+`site`, Protobuf package `ss.contracts.site.v1` (Go package
+`github.com/volod/ss-common/gen/go/site/v1;sitev1`), and Avro namespace `ss.contracts.site`.
+
+| Contract | Owner | Derived from (staging repository) | Model |
+| --- | --- | --- | --- |
+| `sensor-reading` | ss-sens | `SensorReading`, `src/sencoop/sensors/lorawan_decoder.py` | `SensorReading` |
+| `sensor-state` | ss-sens | `SensorSummary`, the sensor half of `src/sencoop/mesh/site_state.py` | `SensorState` |
+| `camera-event` | ss-sens | `CameraEvent`, `src/sencoop/sensors/frigate_events.py` | `CameraEvent` |
+| `acoustic-observation` | ss-sens | `AcousticObservation`, `src/sencoop/sensors/sound_analyzer.py` | `AcousticObservation` |
+| `sensor-event` | ss-sens | `SensorEvent.to_dict()`, `src/selfsuvis/pipeline/realtime/events.py` | `SensorEvent` |
+| `threat-event` | ss-fusion | `ThreatEvent.to_dict()`, same module | `ThreatEvent` |
+| `event-envelope` | ss-fusion | `EventEnvelope`, `src/selfsuvis/app/routers/v1/schemas.py` | `EventEnvelope` |
+| `scene-caption` | ss-video | a `scene_timeline` row as `RtspCaptioner` writes it | `SceneCaption` |
+
+Wire conventions and decisions:
+
+- Field names, types, and requiredness follow the source class. A field the class always sets
+  (including dataclass defaults such as `decoded_object` or `acoustic_events`) is required; a
+  field that may be `None` is optional, and a publisher omits it when unset rather than sending
+  `null`, which is also what proto3 and the golden fixtures carry.
+- Constraints are the ones the producers already guarantee: scores and confidence in 0-1,
+  latitude and longitude ranges, non-negative counters and ages, the `new|update|end` event type,
+  and the `event_kind` discriminators `sensor` and `threat`. Timestamps need an explicit offset.
+- `sensor-state` is one retained message per device instead of the `SiteState` list: the rules
+  forbid arrays of declared objects, and a retained per-device topic gives a new subscriber every
+  sensor without a snapshot service. Counts and `active_motion` are derived by the consumer.
+- `camera-event` keeps `region` (numeric `x`, `y`, `width`, `height`) and the complete NVR message
+  in `raw` as free-form objects; `acoustic-observation` carries `acoustic_events` as an array of
+  free-form objects (`{"event", "energy_ratio"}`).
+- `event-envelope` has no modality field, as in the API body: the modality is the last level of
+  its topic, like the `POST /api/v1/events/{modality}` path parameter.
+- Units and frames are declared per field in `ssBinding` (`dB`, `Cel`, `%`, `[ppm]`, `hPa`, `V`,
+  `deg`, `m`, `s`; `wgs84`, `image`); `scene-caption.t_sec` has time base `media`.
+
+Golden fixtures under `tests/fixtures/contracts/golden/<id>/` were captured from the current code
+in the staging repository by `tests/unit/contracts/test_site_event_contracts.py`, which builds
+each message through the producing code path (the ChirpStack and Frigate decoders, the site-state
+aggregator, `SoundAnalyzer._process_chunk`, the realtime conversions in `coop_ingest`, the API
+schema, and the captioner's row write), asserts that it emits no field outside the contract, that
+it validates, and that it equals the fixture, and rebuilds each class from its fixture.
+`SS_UPDATE_GOLDEN=1` rewrites the fixtures from the code. Each contract also has
+`*.invalid.json` counter-examples for its main constraints (14 valid and 14 invalid messages).
+
+## Topic map
+
+`contracts/topics.yaml` (`ss_contracts.tooling.topics`) maps every topic pattern to exactly one
+contract with the QoS and retain flag publishers use:
+
+| Pattern | Contract | QoS | Retain |
+| --- | --- | --- | --- |
+| `ss/v1/site/{site_id}/sensor/{dev_eui}/reading` | `sensor-reading` | 1 | no |
+| `ss/v1/site/{site_id}/sensor/{dev_eui}/state` | `sensor-state` | 1 | yes |
+| `ss/v1/site/{site_id}/camera/{camera}/event` | `camera-event` | 1 | no |
+| `ss/v1/site/{site_id}/camera/{camera}/acoustic` | `acoustic-observation` | 1 | no |
+| `ss/v1/site/{site_id}/node/{node_id}/sensor-event` | `sensor-event` | 1 | no |
+| `ss/v1/site/{site_id}/sector/{sector_id}/threat` | `threat-event` | 1 | no |
+| `ss/v1/site/{site_id}/zone/{zone_id}/event/{modality}` | `event-envelope` | 1 | no |
+| `ss/v1/site/{site_id}/mission/{mission_id}/scene-caption` | `scene-caption` | 1 | no |
+
+A level is a literal or a named `{placeholder}`; the anonymous `+` and `#` wildcards are not
+allowed, so every pattern can build a concrete topic as well as match one. An entry without a
+string `pattern` and `contract`, a `qos` of 0, 1, or 2, and a boolean `retain` makes the map
+unusable (exit 2). `validate` reports a malformed pattern, repeated placeholder names, a pattern
+listed twice, an unregistered contract, two patterns that can match the same concrete topic, and
+a contract whose `ssBinding.mqttTopic` is not its one mapped pattern. `TopicEntry.build(**params)`
+and `match(topic)` and `TopicMap.resolve(topic)` are the helpers the `ss_kit.mqtt` topic builder
+(`kit-runtime-core`) will wrap; a placeholder value must be one level without `/`, `+`, or `#`.
 
 ## Evolution
 
@@ -179,6 +256,7 @@ violates the policy.
 | `ss_contracts/tooling/gen/` | `checker` (hint readiness) and the `pydantic_gen`, `jsonschema_gen`, `avro`, `proto`, `parquet` generators |
 | `ss_contracts/tooling/generate.py` | Writing every format and the drift gate |
 | `ss_contracts/tooling/golden.py`, `validate.py` | Golden fixtures; the `validate` command |
+| `ss_contracts/tooling/topics.py` | Topic map loading, checks, and topic build and match |
 | `ss_contracts/tooling/fingerprint.py`, `evolution_policy.py`, `evolution.py` | Fingerprints; snapshots, classes, and bump rules; baselines, check, freeze |
 | `ss_contracts/tooling/cli.py` | `ss-contracts` |
 
@@ -187,7 +265,7 @@ install is unchanged (`make footprint`: five packages on aarch64 and x86_64).
 
 ## Tests
 
-`tests/contracts/` (96 tests) copies the sample tree to a temporary directory and covers: every
+`tests/contracts/` (123 tests) copies the sample tree to a temporary directory and covers: every
 authoring rule and binding rule; registry consistency and unusable registries; generation of
 every format, determinism, ruff and strict-mypy cleanliness of the models, a Protobuf descriptor
 set with reserved numbers and names, a `_pb2` round trip with `go_package` and field presence, a
@@ -196,9 +274,15 @@ contract, hand edit, missing and stale modules); golden round trips and counter-
 change class with its required bump, including a planted field removal without a major bump,
 proto number reuse, tampered history, missing and stale baselines, and freeze behavior; the CLI,
 its exit codes, and the missing-extra hint; the runtime wire encodings; and the committed tree.
+They also cover arrays of free-form objects in every format and their rejection with declared
+properties, the ruff `__all__` order of the generated package, every topic-map finding and
+unusable-map case with the CLI exit codes, topic build, match, and overlap, and that every
+committed topic builds a concrete topic resolving back to its own contract. The serialization of
+today's classes to the golden fixtures is tested in the staging repository (27 tests).
 
 ## Result
 
-`make ci` is green on Python 3.11 and 3.13 (158 tests), and `make split-check P=ss-common`
-passes in the isolated copy. Evidence: the staging repository's task record
-`0004-shared-foundation-contracts-odcs-core`.
+`make ci` is green on Python 3.11 and 3.13 (185 tests), and `make split-check P=ss-common`
+passes in the isolated copy. Evidence: the staging repository's task records
+`0004-shared-foundation-contracts-odcs-core` (tooling) and
+`0005-shared-foundation-contracts-site-events` (site-event contracts and topic map).

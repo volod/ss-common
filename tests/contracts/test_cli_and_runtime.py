@@ -108,5 +108,15 @@ def test_runtime_types_use_the_wire_encodings() -> None:
 def test_models_package_exports_the_registry() -> None:
     import ss_contracts.models as models
 
-    assert models.CONTRACTS == {}
+    assert sorted(models.CONTRACTS) == [
+        "acoustic-observation",
+        "camera-event",
+        "event-envelope",
+        "scene-caption",
+        "sensor-event",
+        "sensor-reading",
+        "sensor-state",
+        "threat-event",
+    ]
+    assert all(issubclass(model, ContractModel) for model in models.CONTRACTS.values())
     assert models.ContractModel is ContractModel

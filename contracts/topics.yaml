@@ -1,0 +1,45 @@
+# MQTT topic map: every ss/v1 topic pattern, the one contract its messages follow, and the
+# delivery settings publishers use. `ss-contracts validate` checks it against the registry.
+# Rules: docs/impl/current/contracts.md#topic-map
+topicsVersion: 1
+topics:
+  - pattern: ss/v1/site/{site_id}/sensor/{dev_eui}/reading
+    contract: sensor-reading
+    qos: 1
+    retain: false
+    description: One decoded LoRaWAN uplink per message.
+  - pattern: ss/v1/site/{site_id}/sensor/{dev_eui}/state
+    contract: sensor-state
+    qos: 1
+    retain: true
+    description: Latest state of one sensor; retained so a new subscriber sees every sensor.
+  - pattern: ss/v1/site/{site_id}/camera/{camera}/event
+    contract: camera-event
+    qos: 1
+    retain: false
+    description: Detection lifecycle events (new, update, end) from one camera.
+  - pattern: ss/v1/site/{site_id}/camera/{camera}/acoustic
+    contract: acoustic-observation
+    qos: 1
+    retain: false
+    description: One analysed audio chunk from one camera's stream.
+  - pattern: ss/v1/site/{site_id}/node/{node_id}/sensor-event
+    contract: sensor-event
+    qos: 1
+    retain: false
+    description: Field observations normalized for the realtime threat runtime.
+  - pattern: ss/v1/site/{site_id}/sector/{sector_id}/threat
+    contract: threat-event
+    qos: 1
+    retain: false
+    description: Scored threat detections per sector.
+  - pattern: ss/v1/site/{site_id}/zone/{zone_id}/event/{modality}
+    contract: event-envelope
+    qos: 1
+    retain: false
+    description: Site events from any modality; the modality is the last level.
+  - pattern: ss/v1/site/{site_id}/mission/{mission_id}/scene-caption
+    contract: scene-caption
+    qos: 1
+    retain: false
+    description: Keyframe captions and scene facts from one mission or live stream.

@@ -193,6 +193,13 @@ def render_module(spec: ContractSpec, source_label: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _all_sort_key(name: str) -> tuple[int, str]:
+    """Ruff's isort-style `__all__` order (RUF022): constants, then classes, then the rest."""
+    if name.isupper():
+        return (0, name)
+    return (1, name) if name[:1].isupper() else (2, name)
+
+
 def render_package_init(specs: Iterable[ContractSpec]) -> str:
     """Python source of the models package `__init__`."""
     ordered = sorted(specs, key=lambda spec: module_name(spec.contract_id))
@@ -212,7 +219,10 @@ def render_package_init(specs: Iterable[ContractSpec]) -> str:
         lines.append("}")
     else:
         lines.extend(["", "CONTRACTS: dict[str, type[ContractModel]] = {}"])
-    names = sorted(["CONTRACTS", "ContractModel", *(class_name(spec) for spec in ordered)])
+    names = sorted(
+        ["CONTRACTS", "ContractModel", *(class_name(spec) for spec in ordered)],
+        key=_all_sort_key,
+    )
     lines.extend(["", "__all__ = ["])
     lines.extend(f"{_INDENT}{_literal(name)}," for name in names)
     lines.append("]")

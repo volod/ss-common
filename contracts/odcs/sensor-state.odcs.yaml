@@ -1,0 +1,174 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sensor-state
+version: 1.0.0
+status: active
+name: Sensor state snapshot
+domain: site
+description:
+  purpose: >-
+    Latest state of one LoRaWAN sensor over the rolling window: when it was last seen, how many
+    readings the window holds, and the values of its most recent reading. The sensor half of
+    the site state: one retained message per device, so a new subscriber sees every sensor.
+schema:
+  - name: sensor_state
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          modality: lorawan
+          mqttTopic: ss/v1/site/{site_id}/sensor/{dev_eui}/state
+      - property: schemaGeneration
+        value:
+          pydantic: {className: SensorState}
+          avro: {namespace: ss.contracts.site, recordName: SensorState}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: SensorState
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: dev_eui
+        logicalType: string
+        physicalType: string
+        required: true
+        description: LoRaWAN device EUI.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: last_seen
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Receive time of the most recent reading.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: reading_count
+        logicalType: integer
+        physicalType: integer
+        required: true
+        description: Readings inside the rolling window.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: temperature_c
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Air temperature.
+        customProperties:
+          - property: ssBinding
+            value: {unit: Cel, modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: humidity_pct
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Relative humidity.
+        logicalTypeOptions: {minimum: 0, maximum: 100}
+        customProperties:
+          - property: ssBinding
+            value: {unit: "%", modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: co2_ppm
+        logicalType: number
+        physicalType: double
+        required: false
+        description: CO2 concentration.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: "[ppm]", modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: pressure_hpa
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Barometric pressure.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: hPa, modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: battery_v
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node battery voltage.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: V}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: motion
+        logicalType: boolean
+        physicalType: bool
+        required: false
+        description: "Motion, PIR, occupancy, or presence flag from the codec."
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}}
+      - name: gps_lat
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node latitude from the codec.
+        logicalTypeOptions: {minimum: -90, maximum: 90}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 10}}
+      - name: gps_lon
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node longitude from the codec.
+        logicalTypeOptions: {minimum: -180, maximum: 180}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 11}}
+      - name: gps_alt_m
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node altitude above the WGS84 ellipsoid from the codec.
+        customProperties:
+          - property: ssBinding
+            value: {unit: m, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 12}}
+      - name: rssi
+        logicalType: number
+        physicalType: double
+        required: false
+        description: RSSI of the first receiving gateway.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 13}}
+      - name: snr
+        logicalType: number
+        physicalType: double
+        required: false
+        description: SNR of the first receiving gateway.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 14}}

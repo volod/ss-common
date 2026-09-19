@@ -1,0 +1,198 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sensor-reading
+version: 1.0.0
+status: active
+name: LoRaWAN sensor reading
+domain: site
+description:
+  purpose: >-
+    One decoded LoRaWAN uplink from a field sensor node: radio statistics, the measurements
+    the codec reported under known aliases, and the raw and decoded payloads. Produced by
+    decode_chirpstack_uplink from a ChirpStack uplink event.
+schema:
+  - name: sensor_reading
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          modality: lorawan
+          mqttTopic: ss/v1/site/{site_id}/sensor/{dev_eui}/reading
+      - property: schemaGeneration
+        value:
+          pydantic: {className: SensorReading}
+          avro: {namespace: ss.contracts.site, recordName: SensorReading}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: SensorReading
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: dev_eui
+        logicalType: string
+        physicalType: string
+        required: true
+        description: LoRaWAN device EUI as reported by ChirpStack.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: application_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: ChirpStack application id; empty when absent.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: received_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Uplink time from the network server.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: f_cnt
+        logicalType: integer
+        physicalType: long
+        required: true
+        description: Uplink frame counter.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: rssi
+        logicalType: number
+        physicalType: double
+        required: false
+        description: RSSI of the first receiving gateway.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: snr
+        logicalType: number
+        physicalType: double
+        required: false
+        description: SNR of the first receiving gateway.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: temperature_c
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Air temperature.
+        customProperties:
+          - property: ssBinding
+            value: {unit: Cel, modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: humidity_pct
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Relative humidity.
+        logicalTypeOptions: {minimum: 0, maximum: 100}
+        customProperties:
+          - property: ssBinding
+            value: {unit: "%", modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: co2_ppm
+        logicalType: number
+        physicalType: double
+        required: false
+        description: CO2 concentration.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: "[ppm]", modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}}
+      - name: pressure_hpa
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Barometric pressure.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: hPa, modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 10}}
+      - name: battery_v
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node battery voltage.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: V}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 11}}
+      - name: motion
+        logicalType: boolean
+        physicalType: bool
+        required: false
+        description: "Motion, PIR, occupancy, or presence flag from the codec."
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 12}}
+      - name: gps_lat
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node latitude from the codec.
+        logicalTypeOptions: {minimum: -90, maximum: 90}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 13}}
+      - name: gps_lon
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node longitude from the codec.
+        logicalTypeOptions: {minimum: -180, maximum: 180}
+        customProperties:
+          - property: ssBinding
+            value: {unit: deg, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 14}}
+      - name: gps_alt_m
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Node altitude above the WGS84 ellipsoid from the codec.
+        customProperties:
+          - property: ssBinding
+            value: {unit: m, frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 15}}
+      - name: raw_bytes
+        logicalType: string
+        physicalType: bytes
+        required: false
+        description: Raw uplink payload (FRMPayload).
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 16}}
+      - name: decoded_object
+        logicalType: object
+        physicalType: json
+        required: true
+        description: Decoded payload object from the ChirpStack codec.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 17}}

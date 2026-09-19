@@ -1,0 +1,184 @@
+{
+  "binding": {
+    "mqttTopic": "ss/v1/site/{site_id}/node/{node_id}/sensor-event",
+    "timeBase": "utc"
+  },
+  "contractId": "sensor-event",
+  "fields": {
+    "event_kind": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^sensor$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "event_time": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "freshness_sec": {
+      "binding": {
+        "unit": "s"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 8,
+      "required": true
+    },
+    "ingest_time": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "node_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "payload": {
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 7,
+      "required": true
+    },
+    "sector_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 6,
+      "required": true
+    },
+    "sensor_type": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 5,
+      "required": true
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "d2c185d669f9552451ea25456f2b3244ff9d1340616b3214e986e61592aece08"
+  },
+  "history": [
+    {
+      "binding": {
+        "mqttTopic": "ss/v1/site/{site_id}/node/{node_id}/sensor-event",
+        "timeBase": "utc"
+      },
+      "contractId": "sensor-event",
+      "fields": {
+        "event_kind": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^sensor$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "event_time": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "freshness_sec": {
+          "binding": {
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 8,
+          "required": true
+        },
+        "ingest_time": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "node_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "payload": {
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 7,
+          "required": true
+        },
+        "sector_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "sensor_type": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 5,
+          "required": true
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "d2c185d669f9552451ea25456f2b3244ff9d1340616b3214e986e61592aece08"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

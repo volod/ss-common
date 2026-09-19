@@ -1,0 +1,374 @@
+{
+  "binding": {
+    "modality": "lorawan",
+    "mqttTopic": "ss/v1/site/{site_id}/sensor/{dev_eui}/reading",
+    "timeBase": "utc"
+  },
+  "contractId": "sensor-reading",
+  "fields": {
+    "application_id": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "battery_v": {
+      "binding": {
+        "unit": "V"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 11,
+      "required": false
+    },
+    "co2_ppm": {
+      "binding": {
+        "modality": "environmental",
+        "unit": "[ppm]"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 9,
+      "required": false
+    },
+    "decoded_object": {
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 17,
+      "required": true
+    },
+    "dev_eui": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "f_cnt": {
+      "logicalType": "integer",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "long",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "gps_alt_m": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "m"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 15,
+      "required": false
+    },
+    "gps_lat": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "deg"
+      },
+      "logicalType": "number",
+      "options": {
+        "maximum": 90,
+        "minimum": -90
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 13,
+      "required": false
+    },
+    "gps_lon": {
+      "binding": {
+        "frame": "wgs84",
+        "unit": "deg"
+      },
+      "logicalType": "number",
+      "options": {
+        "maximum": 180,
+        "minimum": -180
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 14,
+      "required": false
+    },
+    "humidity_pct": {
+      "binding": {
+        "modality": "environmental",
+        "unit": "%"
+      },
+      "logicalType": "number",
+      "options": {
+        "maximum": 100,
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 8,
+      "required": false
+    },
+    "motion": {
+      "logicalType": "boolean",
+      "physicalType": "boolean",
+      "protoFieldNumber": 12,
+      "required": false
+    },
+    "pressure_hpa": {
+      "binding": {
+        "modality": "environmental",
+        "unit": "hPa"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 10,
+      "required": false
+    },
+    "raw_bytes": {
+      "logicalType": "string",
+      "physicalType": "bytes",
+      "protoFieldNumber": 16,
+      "required": false
+    },
+    "received_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "rssi": {
+      "binding": {
+        "unit": "dB"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 5,
+      "required": false
+    },
+    "snr": {
+      "binding": {
+        "unit": "dB"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 6,
+      "required": false
+    },
+    "temperature_c": {
+      "binding": {
+        "modality": "environmental",
+        "unit": "Cel"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 7,
+      "required": false
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "88f5b22bd8f1f64874544eb2b61f23ebc02aea5ce122b801bb981cd7357a8c41"
+  },
+  "history": [
+    {
+      "binding": {
+        "modality": "lorawan",
+        "mqttTopic": "ss/v1/site/{site_id}/sensor/{dev_eui}/reading",
+        "timeBase": "utc"
+      },
+      "contractId": "sensor-reading",
+      "fields": {
+        "application_id": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "battery_v": {
+          "binding": {
+            "unit": "V"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 11,
+          "required": false
+        },
+        "co2_ppm": {
+          "binding": {
+            "modality": "environmental",
+            "unit": "[ppm]"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 9,
+          "required": false
+        },
+        "decoded_object": {
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 17,
+          "required": true
+        },
+        "dev_eui": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "f_cnt": {
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "gps_alt_m": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "m"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 15,
+          "required": false
+        },
+        "gps_lat": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 90,
+            "minimum": -90
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 13,
+          "required": false
+        },
+        "gps_lon": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 180,
+            "minimum": -180
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 14,
+          "required": false
+        },
+        "humidity_pct": {
+          "binding": {
+            "modality": "environmental",
+            "unit": "%"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 100,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 8,
+          "required": false
+        },
+        "motion": {
+          "logicalType": "boolean",
+          "physicalType": "boolean",
+          "protoFieldNumber": 12,
+          "required": false
+        },
+        "pressure_hpa": {
+          "binding": {
+            "modality": "environmental",
+            "unit": "hPa"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 10,
+          "required": false
+        },
+        "raw_bytes": {
+          "logicalType": "string",
+          "physicalType": "bytes",
+          "protoFieldNumber": 16,
+          "required": false
+        },
+        "received_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "rssi": {
+          "binding": {
+            "unit": "dB"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": false
+        },
+        "snr": {
+          "binding": {
+            "unit": "dB"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 6,
+          "required": false
+        },
+        "temperature_c": {
+          "binding": {
+            "modality": "environmental",
+            "unit": "Cel"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 7,
+          "required": false
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "88f5b22bd8f1f64874544eb2b61f23ebc02aea5ce122b801bb981cd7357a8c41"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

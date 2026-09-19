@@ -1,0 +1,152 @@
+{
+  "binding": {
+    "modality": "acoustic",
+    "mqttTopic": "ss/v1/site/{site_id}/camera/{camera}/acoustic",
+    "timeBase": "utc"
+  },
+  "contractId": "acoustic-observation",
+  "fields": {
+    "acoustic_events": {
+      "items": "json",
+      "logicalType": "array",
+      "physicalType": "array",
+      "protoFieldNumber": 5,
+      "required": true
+    },
+    "camera": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "chunk_duration_sec": {
+      "binding": {
+        "unit": "s"
+      },
+      "logicalType": "number",
+      "options": {
+        "exclusiveMinimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "recorded_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "rms_db": {
+      "binding": {
+        "unit": "dB"
+      },
+      "logicalType": "number",
+      "physicalType": "double",
+      "protoFieldNumber": 6,
+      "required": true
+    },
+    "silence": {
+      "logicalType": "boolean",
+      "physicalType": "boolean",
+      "protoFieldNumber": 7,
+      "required": true
+    },
+    "speech_transcript": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 4,
+      "required": false
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "be6e7cc89f55f105c7b3055e3c099b01f76fb4139add642576995d2a43143f3d"
+  },
+  "history": [
+    {
+      "binding": {
+        "modality": "acoustic",
+        "mqttTopic": "ss/v1/site/{site_id}/camera/{camera}/acoustic",
+        "timeBase": "utc"
+      },
+      "contractId": "acoustic-observation",
+      "fields": {
+        "acoustic_events": {
+          "items": "json",
+          "logicalType": "array",
+          "physicalType": "array",
+          "protoFieldNumber": 5,
+          "required": true
+        },
+        "camera": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "chunk_duration_sec": {
+          "binding": {
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "exclusiveMinimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "recorded_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "rms_db": {
+          "binding": {
+            "unit": "dB"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "silence": {
+          "logicalType": "boolean",
+          "physicalType": "boolean",
+          "protoFieldNumber": 7,
+          "required": true
+        },
+        "speech_transcript": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": false
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "be6e7cc89f55f105c7b3055e3c099b01f76fb4139add642576995d2a43143f3d"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

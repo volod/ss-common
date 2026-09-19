@@ -7,7 +7,8 @@
 
 `--root` is the directory holding `registry.yaml` (default `$SS_CONTRACTS_ROOT`, else
 `contracts/` under the project root). Exit codes: 0 clean, 1 findings, 2 unusable registry or
-missing `tooling` extra.
+missing `tooling` extra; `validate` also checks `topics.yaml` next to the registry and exits 2
+when that map is unusable.
 """
 
 import argparse
@@ -41,7 +42,8 @@ def _cmd_validate(registry: "Registry", args: argparse.Namespace) -> int:
 
     report = validate(registry)
     if report.ok:
-        _LOG.info("[contracts] %d valid", len(report.contract_ids))
+        topics = "" if report.topic_count is None else f", {report.topic_count} topics mapped"
+        _LOG.info("[contracts] %d valid%s", len(report.contract_ids), topics)
     return _fail(report.errors)
 
 
@@ -119,6 +121,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         from ss_contracts.tooling.registry import RegistryError, load_registry
+        from ss_contracts.tooling.topics import TopicMapError
 
         registry = load_registry(args.root)
         return _COMMANDS[args.command](registry, args)
@@ -126,7 +129,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if (exc.name or "").split(".")[0] not in TOOLING_MODULES:
             raise
         _LOG.error("ERROR: %s (missing module '%s')", TOOLING_HINT, exc.name)
-    except (RegistryError, FileNotFoundError) as exc:
+    except (RegistryError, TopicMapError, FileNotFoundError) as exc:
         _LOG.error("ERROR: %s", exc)
     return 2
 

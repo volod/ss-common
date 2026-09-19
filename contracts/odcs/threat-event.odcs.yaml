@@ -1,0 +1,107 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: threat-event
+version: 1.0.0
+status: active
+name: Realtime threat event
+domain: site
+description:
+  purpose: >-
+    A detection the realtime threat runtime scores as a possible threat, placed in a sector;
+    the payload carries threat_type, score, label, and the source details
+    (coop_ingest.camera_event_to_threat).
+schema:
+  - name: threat_event
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          mqttTopic: ss/v1/site/{site_id}/sector/{sector_id}/threat
+      - property: schemaGeneration
+        value:
+          pydantic: {className: ThreatEvent}
+          avro: {namespace: ss.contracts.site, recordName: ThreatEvent}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: ThreatEvent
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: event_kind
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Event discriminator, always 'threat'."
+        logicalTypeOptions: {pattern: ^threat$}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: event_time
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the observation happened.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: ingest_time
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the realtime runtime ingested it.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: node_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Reporting node, lowercase (a DevEUI or 'frigate:<camera>')."
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: sensor_type
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Reporting sensor type, lowercase (lorawan, camera, rf)."
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: sector_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Threat sector, a 'grid:<lat>:<lon>' cell or 'unknown'."
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: payload
+        logicalType: object
+        physicalType: json
+        required: true
+        description: Modality-specific measurements or detection details.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: freshness_sec
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Age of the observation when ingested.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: s}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}

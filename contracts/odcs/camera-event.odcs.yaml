@@ -1,0 +1,140 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: camera-event
+version: 1.0.0
+status: active
+name: Camera detection event
+domain: site
+description:
+  purpose: >-
+    One object-detection lifecycle event from the NVR (Frigate): the tracked object, its
+    scores, its normalized bounding region, and the media available for it. Produced by
+    FrigateEventConsumer.decode from a frigate/events message.
+schema:
+  - name: camera_event
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          modality: camera
+          mqttTopic: ss/v1/site/{site_id}/camera/{camera}/event
+      - property: schemaGeneration
+        value:
+          pydantic: {className: CameraEvent}
+          avro: {namespace: ss.contracts.site, recordName: CameraEvent}
+          proto:
+            package: ss.contracts.site.v1
+            messageName: CameraEvent
+            goPackage: github.com/volod/ss-common/gen/go/site/v1;sitev1
+    properties:
+      - name: event_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: NVR event id of the tracked object; empty when absent.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: camera
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Camera name.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: label
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Detected object label.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: score
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Current detection score.
+        logicalTypeOptions: {minimum: 0, maximum: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: top_score
+        logicalType: number
+        physicalType: double
+        required: true
+        description: "Highest score over the object's life."
+        logicalTypeOptions: {minimum: 0, maximum: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: event_type
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Lifecycle stage: new, update, or end."
+        logicalTypeOptions: {pattern: "^(new|update|end)$"}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: started_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the object was first detected.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: ended_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: false
+        description: Time the object left the frame; unset while active.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: has_snapshot
+        logicalType: boolean
+        physicalType: bool
+        required: true
+        description: A snapshot image is available.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}}
+      - name: has_clip
+        logicalType: boolean
+        physicalType: bool
+        required: true
+        description: A recorded clip is available.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 10}}
+      - name: region
+        logicalType: object
+        physicalType: json
+        required: true
+        description: "Normalized detection region: numeric x, y, width, height in 0-1."
+        customProperties:
+          - property: ssBinding
+            value: {frame: image}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 11}}
+      - name: raw
+        logicalType: object
+        physicalType: json
+        required: true
+        description: "The complete NVR event message, passed through."
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 12}}

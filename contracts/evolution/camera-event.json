@@ -1,0 +1,238 @@
+{
+  "binding": {
+    "modality": "camera",
+    "mqttTopic": "ss/v1/site/{site_id}/camera/{camera}/event",
+    "timeBase": "utc"
+  },
+  "contractId": "camera-event",
+  "fields": {
+    "camera": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "ended_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 8,
+      "required": false
+    },
+    "event_id": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "event_type": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^(new|update|end)$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 6,
+      "required": true
+    },
+    "has_clip": {
+      "logicalType": "boolean",
+      "physicalType": "boolean",
+      "protoFieldNumber": 10,
+      "required": true
+    },
+    "has_snapshot": {
+      "logicalType": "boolean",
+      "physicalType": "boolean",
+      "protoFieldNumber": 9,
+      "required": true
+    },
+    "label": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "raw": {
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 12,
+      "required": true
+    },
+    "region": {
+      "binding": {
+        "frame": "image"
+      },
+      "logicalType": "object",
+      "physicalType": "json",
+      "protoFieldNumber": 11,
+      "required": true
+    },
+    "score": {
+      "logicalType": "number",
+      "options": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "started_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 7,
+      "required": true
+    },
+    "top_score": {
+      "logicalType": "number",
+      "options": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 5,
+      "required": true
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "e25e082f68a3563a422fc460ca18c72d14bad61493b2d374847f03f6df579d54"
+  },
+  "history": [
+    {
+      "binding": {
+        "modality": "camera",
+        "mqttTopic": "ss/v1/site/{site_id}/camera/{camera}/event",
+        "timeBase": "utc"
+      },
+      "contractId": "camera-event",
+      "fields": {
+        "camera": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "ended_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 8,
+          "required": false
+        },
+        "event_id": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "event_type": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(new|update|end)$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "has_clip": {
+          "logicalType": "boolean",
+          "physicalType": "boolean",
+          "protoFieldNumber": 10,
+          "required": true
+        },
+        "has_snapshot": {
+          "logicalType": "boolean",
+          "physicalType": "boolean",
+          "protoFieldNumber": 9,
+          "required": true
+        },
+        "label": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "raw": {
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 12,
+          "required": true
+        },
+        "region": {
+          "binding": {
+            "frame": "image"
+          },
+          "logicalType": "object",
+          "physicalType": "json",
+          "protoFieldNumber": 11,
+          "required": true
+        },
+        "score": {
+          "logicalType": "number",
+          "options": {
+            "maximum": 1,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "started_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 7,
+          "required": true
+        },
+        "top_score": {
+          "logicalType": "number",
+          "options": {
+            "maximum": 1,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": true
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "e25e082f68a3563a422fc460ca18c72d14bad61493b2d374847f03f6df579d54"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

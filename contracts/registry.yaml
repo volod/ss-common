@@ -7,4 +7,28 @@ modelsDir: ../src/ss_contracts/models
 # JSON Schema, Protobuf, Avro, and Parquet outputs; gitignored, rebuilt by `make contracts-gen`.
 generatedDir: generated
 goldenDir: ../tests/fixtures/contracts/golden
-contracts: {}
+contracts:
+  acoustic-observation:
+    odcs: odcs/acoustic-observation.odcs.yaml
+    owner: ss-sens
+  camera-event:
+    odcs: odcs/camera-event.odcs.yaml
+    owner: ss-sens
+  event-envelope:
+    odcs: odcs/event-envelope.odcs.yaml
+    owner: ss-fusion
+  scene-caption:
+    odcs: odcs/scene-caption.odcs.yaml
+    owner: ss-video
+  sensor-event:
+    odcs: odcs/sensor-event.odcs.yaml
+    owner: ss-sens
+  sensor-reading:
+    odcs: odcs/sensor-reading.odcs.yaml
+    owner: ss-sens
+  sensor-state:
+    odcs: odcs/sensor-state.odcs.yaml
+    owner: ss-sens
+  threat-event:
+    odcs: odcs/threat-event.odcs.yaml
+    owner: ss-fusion
