@@ -1,15 +1,15 @@
 # Contracts
 
-Cross-service messages are authored once as ODCS v3.1 YAML, registered, gated by version-bump
+Cross-service messages and file manifests are authored once as ODCS v3.1 YAML, registered, gated by version-bump
 rules, and generated to Pydantic and JSON Schema (Python services), Protobuf (the Go agent and
 future Rust or C++ consumers), and Avro and Parquet (datasets and benchmarks) by one command.
 The generic part of fl-op's contract tooling was ported; its optimization model, xopt bindings,
 profiles, plan contract, domain packs, and Elasticsearch generator were not.
 
-The registry holds the eight [site-event contracts](#site-event-contracts) and the
-[MQTT topic map](#topic-map) that binds `ss/v1/...` topics to them. The mission and
-model-artifact manifests are the next `shared-foundation` task in the staging repository's plan.
-The tooling is exercised end to end over the sample tree in `tests/fixtures/contracts/sample/`.
+The registry holds the eight [site-event contracts](#site-event-contracts), the
+[MQTT topic map](#topic-map) that binds `ss/v1/...` topics to them, and the two
+[manifest contracts](#manifest-contracts) for mission bundles and model artifacts. The tooling is
+exercised end to end over the sample tree in `tests/fixtures/contracts/sample/`.
 
 ## Layout
 
@@ -34,9 +34,11 @@ it. `registryVersion: 1`, `jsonSchemaIdBase`, `modelsDir`, and `generatedDir` ar
 
 The base install (pydantic only) imports the models. `ss_contracts.base` defines:
 
-- `ContractModel`: base of every generated model. Unknown fields are ignored, not rejected,
-  because an added optional field is a minor change that older consumers must tolerate.
-  Class attributes `CONTRACT_ID`, `CONTRACT_VERSION`, and `SS_BINDING` (message binding).
+- `ContractRecord`: base of the records nested in a message (and of `ContractModel`). Unknown
+  fields are ignored, not rejected, because an added optional field is a minor change that older
+  consumers must tolerate.
+- `ContractModel`: base of every generated model, with class attributes `CONTRACT_ID`,
+  `CONTRACT_VERSION`, and `SS_BINDING` (message binding).
 - `ContractBytes`: bytes that serialize to standard base64 in JSON, the alphabet the Protobuf
   JSON mapping emits (Pydantic's own base64 mode writes the URL-safe alphabet); both alphabets
   decode.
@@ -67,15 +69,32 @@ proto3 reserved words, Pydantic attributes, or type names the generated module u
 | `timestamp` | `timestamp` | `ContractTimestamp` | string, RFC 3339 with offset | `google.protobuf.Timestamp` | `long` `timestamp-micros` | `timestamp[us, tz=UTC]` |
 | `date` | `date` | `datetime.date` | string, date | `string` (ISO 8601) | `int` `date` | `date32` |
 | `object` | `json` | `dict[str, Any]` | object | `google.protobuf.Struct` | `string` (JSON text) | `large_string` (JSON text) |
-| `array` | `array` + scalar or `json` `items` | `list[T]` | array | `repeated T` | `array` | `large_list<T>` |
+| `object` | `record` + `properties` | `ContractRecord` subclass | object in `$defs` | nested message | nested `record` | `struct` |
+| `array` | `array` + scalar, `json`, or `record` `items` | `list[T]` | array | `repeated T` | `array` | `large_list<T>` |
 
 An optional field (`required: false`) is `T | None = None`, a `["null", T]` union, a nullable
 Arrow field, and a proto3 `optional` scalar; proto message types and repeated fields have no
 separate null state, so an optional object arrives unset and an optional array empty. An array
 may hold free-form objects (`items: {logicalType: object, physicalType: json}`): `list[dict[str,
 Any]]`, `repeated google.protobuf.Struct`, an Avro array of JSON strings, and an Arrow
-`large_list<large_string>`. Nested objects with declared `properties` (as a field or as array
-items), nested arrays, and `time` are rejected.
+`large_list<large_string>`. Nested arrays and `time` are rejected, and so are declared
+`properties` on a free-form object.
+
+### Records
+
+An object with declared properties is a record: `physicalType: record` on the property, or on
+`items` for an array of records. Its `properties` follow the same rules as message fields
+(snake-case unique names, description, explicit `required`, types, options, and bindings), with
+their own `fieldGeneration.proto.fieldNumber` numbered within the record. Records nest one level:
+a record's property may not be a record or an array of records. The record's type name is
+`fieldGeneration.recordName` on the property, PascalCase, unique in the contract, and different
+from the message's type name in each format; it names the Pydantic class (defined in the same
+module before the message class and not exported from the package), the Protobuf message nested
+in the contract message, and the Avro record. `items.description` documents one record of an
+array (the field's description otherwise). An optional record is `T | None`, a `["null",
+record]` union, a nullable Arrow struct, and an unset Protobuf message field. The Parquet
+descriptor lists a record's own `fields` under its entry with `arrow_type` `struct` or
+`large_list<struct>`.
 
 `logicalTypeOptions` map to Pydantic and JSON Schema constraints: strings `minLength`,
 `maxLength`, `pattern`, `format` (schema annotation); numbers and integers `minimum`, `maximum`,
@@ -108,6 +127,7 @@ metadata in Arrow and the Parquet descriptor.
 | `avro` | `avro.namespace`, `avro.recordName` | -- |
 | `proto` | `proto.package`, `proto.messageName`; optional `goPackage`, `reserved`, `reservedNames` | `proto.fieldNumber` (unique, 1 to 536870911, outside 19000-19999, not reserved) |
 | `parquet` | -- | -- |
+| all but `parquet` | -- | `recordName` on a [record](#records) |
 
 ## Commands
 
@@ -199,10 +219,60 @@ it validates, and that it equals the fixture, and rebuilds each class from its f
 `SS_UPDATE_GOLDEN=1` rewrites the fixtures from the code. Each contract also has
 `*.invalid.json` counter-examples for its main constraints (14 valid and 14 invalid messages).
 
+## Manifest contracts
+
+Files that move between services for deep analysis and model hand-off. Both are version `1.0.0`,
+`active`, carry no `mqttTopic` (they are files, not messages), and use [records](#records).
+
+| Contract | Owner | Domain, Protobuf package, Avro namespace | Model | Written as |
+| --- | --- | --- | --- | --- |
+| `mission-bundle` | ss-video | `mission`, `ss.contracts.mission.v1`, `ss.contracts.mission` | `MissionBundle` | `mission.json` at the bundle root |
+| `model-artifact` | ss-fusion | `model`, `ss.contracts.model.v1`, `ss.contracts.model` | `ModelArtifact` | `<model file>.manifest.json` next to the file |
+
+`mission-bundle` fields: `mission_id`; `created_at`; `time_base` (a binding time base; `media`
+today, since every sidecar row time is seconds from its video's start); optional `start_time`
+(container creation time of the first video); `platform` (`Platform`: `robot_id` as in the
+`missions` table, optional `camera_model` from container tags); optional `origin` (`GeoOrigin`:
+`lat`, `lon`, `alt`, `wgs84`), the first GPS fix of the first video, which platform fusion and
+`missions.gps_origin_json` use as the ENU origin; `videos` (at least one `BundleVideo`:
+`video_id`, file fields, optional `duration_sec`, `fps`, `width`, `height`, and `gps_source`
+`srt` or `atom`); and `sidecars` (`BundleSidecar`: `video_id`, `kind`, `format` `jsonl` or
+`srt`, file fields, `row_count`, optional `t_start_sec` and `t_end_sec`).
+
+`model-artifact` fields: `artifact_id` (the `model_checkpoints` version id, or the file stem);
+`format` `pytorch` or `onnx`; file fields; `base_model` (the hub model the weights were actually
+loaded from); `producer` (dotted module); `created_at`; optional `derived_from` (`ArtifactRef`:
+`path`, `sha256` of the checkpoint or float ONNX file it was made from); optional
+`training_data` (`TrainingDataRef`: `kind`, `ref`, optional `sample_count`); `metrics` (a
+`Metric` list of `name` and `value`, empty when none); optional `image_size`, `opset`, and
+`quantization`.
+
+File fields are `path`, `sha256` (lowercase hex), and `size_bytes`. A `path` is POSIX and
+relative to the manifest's directory, with no leading `/`, no backslash, and no segment starting
+with a dot; only `derived_from.path` may start with `../` segments, since a checkpoint often lives
+outside the export directory. A consumer resolves every path against the manifest's directory and
+checks the digest before reading the file.
+
+Golden fixtures under `tests/fixtures/contracts/golden/`:
+
+| Fixture | Source |
+| --- | --- |
+| `mission-bundle/local-run-nar.json` | the real local run's input video, built by the staging repository's builder |
+| `mission-bundle/tests-assets.json` | the staging repository's `tests/assets/` videos |
+| `mission-bundle/sidecars-and-gps.json` | one test video with the repository's IMU, barometer, wind, and environment sidecar generators (the last under `sensors/`) and a DJI srt file |
+| `model-artifact/onnx-export-nar.json`, `onnx-int8-nar.json` | written by `export_onnx.py` exporting and INT8-quantizing the real run's SSL checkpoint on a CUDA host |
+| `model-artifact/finetune-checkpoint.json` | the FINETUNE handler's manifest builder with fixed inputs |
+
+The staging repository's `tests/unit/contracts/test_manifest_contracts.py` rebuilds the
+deterministic fixtures from the code, checks that the export fixtures chain (INT8 to float ONNX
+to checkpoint), and exercises both writers. Each contract also has `*.invalid.json`
+counter-examples (6 valid and 12 invalid manifests).
+
 ## Topic map
 
 `contracts/topics.yaml` (`ss_contracts.tooling.topics`) maps every topic pattern to exactly one
-contract with the QoS and retain flag publishers use:
+contract with the QoS and retain flag publishers use; every contract with an `ssBinding.mqttTopic`
+is mapped, and the manifest contracts, which have none, are not:
 
 | Pattern | Contract | QoS | Retain |
 | --- | --- | --- | --- |
@@ -228,17 +298,19 @@ and `match(topic)` and `TopicMap.resolve(topic)` are the helpers the `ss_kit.mqt
 
 A snapshot records the version, the message binding, and per field the logical type, kind, item
 kind, requiredness, `logicalTypeOptions`, binding, and proto field number, plus the SHA-256 of
-the Avro parsing canonical form. Descriptions and other hints are not part of it (patch level).
+the Avro parsing canonical form. A record field also records its `recordName` and its own
+fields, classified by the same rules under a dotted name (`videos.sha256`). Descriptions and other
+hints are not part of it (patch level).
 
 | Change | Class | Required bump |
 | --- | --- | --- |
 | none | identical | none; never backwards |
 | added optional field, changed constraint, added binding key | backward | at least minor |
-| removed field; changed logical type, kind, item kind, requiredness, or proto number; added required field; changed or removed binding key | breaking | major |
+| removed field; changed logical type, kind, item kind, requiredness, proto number, or record name; added required field; changed or removed binding key | breaking | major |
 
 `evolution-check` classifies the current contract against the latest reviewed snapshot and
 re-checks every adjacent history pair. It also fails on a proto field number that ever named a
-different field (reserve it instead), a contract without a baseline, a baseline without history,
+different field in the message or in one record (reserve it instead), a contract without a baseline, a baseline without history,
 and a baseline without a contract. `evolution-freeze` appends the current snapshot to each
 history (unchanged when identical), prunes stale baselines, and writes nothing when any contract
 violates the policy.
@@ -247,7 +319,7 @@ violates the policy.
 
 | Module | Role |
 | --- | --- |
-| `ss_contracts/base.py` | `ContractModel`, `ContractBytes`, `ContractTimestamp` |
+| `ss_contracts/base.py` | `ContractRecord`, `ContractModel`, `ContractBytes`, `ContractTimestamp` |
 | `ss_contracts/tooling/types.py` | Formats, logical types, kinds, aliases, integer bounds |
 | `ss_contracts/tooling/binding.py` | `ssBinding` validation |
 | `ss_contracts/tooling/rules.py` | Official schema validation and authoring rules |
@@ -265,7 +337,7 @@ install is unchanged (`make footprint`: five packages on aarch64 and x86_64).
 
 ## Tests
 
-`tests/contracts/` (123 tests) copies the sample tree to a temporary directory and covers: every
+`tests/contracts/` (145 tests) copies the sample tree to a temporary directory and covers: every
 authoring rule and binding rule; registry consistency and unusable registries; generation of
 every format, determinism, ruff and strict-mypy cleanliness of the models, a Protobuf descriptor
 set with reserved numbers and names, a `_pb2` round trip with `go_package` and field presence, a
@@ -277,12 +349,18 @@ its exit codes, and the missing-extra hint; the runtime wire encodings; and the 
 They also cover arrays of free-form objects in every format and their rejection with declared
 properties, the ruff `__all__` order of the generated package, every topic-map finding and
 unusable-map case with the CLI exit codes, topic build, match, and overlap, and that every
-committed topic builds a concrete topic resolving back to its own contract. The serialization of
-today's classes to the golden fixtures is tested in the staging repository (27 tests).
+committed topic builds a concrete topic resolving back to its own contract. Records are covered
+by every rule (missing properties or name, nesting, nested property rules, duplicate names), the
+generation hints (nested field numbers, name collisions), each format (model validation, `$defs`,
+a nested Protobuf round trip in a private descriptor pool, an Avro round trip, Arrow structs,
+ruff and strict mypy), and each evolution class under dotted names, including a record rename
+and a record proto number reuse. The serialization of today's classes and manifests to the
+golden fixtures is tested in the staging repository (27 site-event and 12 manifest tests).
 
 ## Result
 
-`make ci` is green on Python 3.11 and 3.13 (185 tests), and `make split-check P=ss-common`
+`make ci` is green on Python 3.11 and 3.13 (207 tests), and `make split-check P=ss-common`
 passes in the isolated copy. Evidence: the staging repository's task records
-`0004-shared-foundation-contracts-odcs-core` (tooling) and
-`0005-shared-foundation-contracts-site-events` (site-event contracts and topic map).
+`0004-shared-foundation-contracts-odcs-core` (tooling),
+`0005-shared-foundation-contracts-site-events` (site-event contracts and topic map), and
+`0006-shared-foundation-contracts-mission-artifacts` (records and manifest contracts).

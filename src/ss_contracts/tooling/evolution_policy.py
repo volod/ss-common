@@ -11,8 +11,13 @@ are not part of it, so editing them is a patch-level change. A step between two 
 - breaking (a removed field; a changed logical type, kind, item kind, requiredness, or proto field
   number; an added required field; a changed or removed binding key): a major bump.
 
+A record field also records its `recordName` and its own fields, classified by the same rules
+under a dotted name (`files.sha256`); renaming a record is breaking, because Avro resolves records
+by name.
+
 A change without a version bump always fails, and so does a proto field number that ever named a
-different field, since reusing it corrupts old readers on the wire.
+different field (in the message or in one record), since reusing it corrupts old readers on the
+wire.
 """
 
 from collections.abc import Mapping
@@ -28,7 +33,9 @@ CHANGE_BREAKING = "breaking"
 _ORDER = {CHANGE_IDENTICAL: 0, CHANGE_BACKWARD: 1, CHANGE_BREAKING: 2}
 
 # Field attributes whose change breaks existing producers or consumers.
-_BREAKING_ATTRS = ("logicalType", "physicalType", "items", "required", "protoFieldNumber")
+_BREAKING_ATTRS = (
+    "logicalType", "physicalType", "items", "required", "protoFieldNumber", "recordName",
+)  # fmt: skip
 
 
 @dataclass
@@ -57,6 +64,9 @@ def _field_snapshot(fld: FieldSpec) -> dict[str, Any]:
     number = fld.generation.get("proto", {}).get("fieldNumber")
     if isinstance(number, int):
         entry["protoFieldNumber"] = number
+    if fld.is_record:
+        entry["recordName"] = fld.record_name
+        entry["fields"] = {sub.name: _field_snapshot(sub) for sub in fld.record_fields}
     return entry
 
 
@@ -100,6 +110,8 @@ def _classify_field(
     if old.get("options", {}) != new.get("options", {}):
         report.note(CHANGE_BACKWARD, f"field '{name}' constraints changed")
     _classify_binding(f"field '{name}'", old.get("binding", {}), new.get("binding", {}), report)
+    if "fields" in old and "fields" in new:
+        _classify_fields(old["fields"], new["fields"], report, prefix=f"{name}.")
 
 
 def _classify_added(name: str, new: Mapping[str, Any], report: ChangeReport) -> None:
@@ -109,17 +121,24 @@ def _classify_added(name: str, new: Mapping[str, Any], report: ChangeReport) -> 
         report.note(CHANGE_BACKWARD, f"added optional field '{name}'")
 
 
+def _classify_fields(
+    old_fields: Mapping[str, Any],
+    new_fields: Mapping[str, Any],
+    report: ChangeReport,
+    prefix: str = "",
+) -> None:
+    for name in sorted(old_fields.keys() - new_fields.keys()):
+        report.note(CHANGE_BREAKING, f"removed field '{prefix}{name}'")
+    for name in sorted(old_fields.keys() & new_fields.keys()):
+        _classify_field(f"{prefix}{name}", old_fields[name], new_fields[name], report)
+    for name in sorted(new_fields.keys() - old_fields.keys()):
+        _classify_added(f"{prefix}{name}", new_fields[name], report)
+
+
 def classify_change(baseline: Mapping[str, Any], current: Mapping[str, Any]) -> ChangeReport:
     """Classify the delta between two snapshots."""
     report = ChangeReport()
-    old_fields: Mapping[str, Any] = baseline.get("fields") or {}
-    new_fields: Mapping[str, Any] = current.get("fields") or {}
-    for name in sorted(old_fields.keys() - new_fields.keys()):
-        report.note(CHANGE_BREAKING, f"removed field '{name}'")
-    for name in sorted(old_fields.keys() & new_fields.keys()):
-        _classify_field(name, old_fields[name], new_fields[name], report)
-    for name in sorted(new_fields.keys() - old_fields.keys()):
-        _classify_added(name, new_fields[name], report)
+    _classify_fields(baseline.get("fields") or {}, current.get("fields") or {}, report)
     old_binding = baseline.get("binding") or {}
     _classify_binding("message", old_binding, current.get("binding") or {}, report)
     return report
@@ -154,19 +173,31 @@ def version_policy_errors(
     return []
 
 
+def _numbered_fields(fields: Mapping[str, Any], scope: str = "") -> list[tuple[str, int, str]]:
+    """(scope, proto number, field name) for the fields of a message and its records."""
+    numbered: list[tuple[str, int, str]] = []
+    for name, spec in fields.items():
+        number = spec.get("protoFieldNumber")
+        if isinstance(number, int):
+            numbered.append((scope, number, name))
+        if isinstance(spec.get("fields"), Mapping):
+            record_scope = str(spec.get("recordName") or name)
+            numbered.extend(_numbered_fields(spec["fields"], record_scope))
+    return numbered
+
+
 def proto_number_errors(contract_id: str, snapshots: list[Mapping[str, Any]]) -> list[str]:
-    """A proto field number that named different fields across the history."""
-    owners: dict[int, tuple[str, str]] = {}
+    """A proto field number that named different fields (per message or record) in the history."""
+    owners: dict[tuple[str, int], tuple[str, str]] = {}
     errors: list[str] = []
     for snapshot in snapshots:
-        for name, spec in (snapshot.get("fields") or {}).items():
-            number = spec.get("protoFieldNumber")
-            if not isinstance(number, int):
-                continue
-            previous = owners.setdefault(number, (name, str(snapshot.get("version"))))
+        version = str(snapshot.get("version"))
+        for scope, number, name in _numbered_fields(snapshot.get("fields") or {}):
+            previous = owners.setdefault((scope, number), (name, version))
             if previous[0] != name:
+                where = f"record {scope} " if scope else ""
                 errors.append(
-                    f"{contract_id}: proto field number {number} was '{previous[0]}' in "
-                    f"{previous[1]} and is '{name}' in {snapshot.get('version')}; reserve it instead"
+                    f"{contract_id}: {where}proto field number {number} was '{previous[0]}' in "
+                    f"{previous[1]} and is '{name}' in {version}; reserve it instead"
                 )
     return sorted(set(errors))

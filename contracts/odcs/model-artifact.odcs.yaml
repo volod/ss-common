@@ -1,0 +1,224 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: model-artifact
+version: 1.0.0
+status: active
+name: Model artifact manifest
+domain: model
+description:
+  purpose: >-
+    One trained or exported model file with its digest, base model, training data, and
+    metrics: a fine-tuned PyTorch checkpoint or an ONNX export. ss-fusion publishes it next
+    to the file; ss-video pins a version by artifact_id and sha256 before loading it.
+schema:
+  - name: model_artifact
+    logicalType: object
+    physicalType: file
+    customProperties:
+      - property: schemaGeneration
+        value:
+          pydantic: {className: ModelArtifact}
+          avro: {namespace: ss.contracts.model, recordName: ModelArtifact}
+          proto:
+            package: ss.contracts.model.v1
+            messageName: ModelArtifact
+            goPackage: github.com/volod/ss-common/gen/go/model/v1;modelv1
+    properties:
+      - name: artifact_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: 'Artifact identifier: the model_checkpoints model_version_id, or the file stem for an export.'
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: format
+        logicalType: string
+        physicalType: string
+        required: true
+        description: 'File format: pytorch (a torch.save state dict) or onnx.'
+        logicalTypeOptions: {pattern: '^(pytorch|onnx)$'}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: path
+        logicalType: string
+        physicalType: string
+        required: true
+        description: POSIX path of the model file relative to the directory holding the manifest; no absolute paths, backslashes, or segments starting with a dot.
+        logicalTypeOptions: {pattern: '^([^/\\.][^/\\]*/)*[^/\\.][^/\\]*$'}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: sha256
+        logicalType: string
+        physicalType: string
+        required: true
+        description: SHA-256 of the model file, lowercase hex.
+        logicalTypeOptions: {pattern: '^[0-9a-f]{64}$'}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: size_bytes
+        logicalType: integer
+        physicalType: long
+        required: true
+        description: Model file size.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: By}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: base_model
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Hub name of the pretrained model the weights start from (dinov3_vitb14, dinov2_vits14, efficientvit_b1, ...).
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: producer
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Code path that wrote the file, as a dotted module name.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: created_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the file was written or registered.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: derived_from
+        logicalType: object
+        physicalType: record
+        required: false
+        description: The checkpoint an export was made from; unset for weights loaded from the hub or trained directly.
+        properties:
+          - name: path
+            logicalType: string
+            physicalType: string
+            required: true
+            description: POSIX path of the source file relative to the manifest directory; may climb out of it with leading ../ segments.
+            logicalTypeOptions: {pattern: '^(\.\./)*([^/\\.][^/\\]*/)*[^/\\.][^/\\]*$'}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 1}}
+          - name: sha256
+            logicalType: string
+            physicalType: string
+            required: true
+            description: SHA-256 of the source file.
+            logicalTypeOptions: {pattern: '^[0-9a-f]{64}$'}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 2}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}, recordName: ArtifactRef}
+      - name: training_data
+        logicalType: object
+        physicalType: record
+        required: false
+        description: Data the weights were trained on; unset for a plain export of hub weights.
+        properties:
+          - name: kind
+            logicalType: string
+            physicalType: string
+            required: true
+            description: 'Kind of training data: cvat_annotations (annotated frames in the database), cvat_xml (a CVAT export), or mission_frames (self-supervised frames of a mission).'
+            logicalTypeOptions: {pattern: '^[a-z][a-z0-9_]*$'}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 1}}
+          - name: ref
+            logicalType: string
+            physicalType: string
+            required: true
+            description: 'Reference to the data: a mission id, a CVAT XML path, or the database selection.'
+            logicalTypeOptions: {minLength: 1}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 2}}
+          - name: sample_count
+            logicalType: integer
+            physicalType: long
+            required: false
+            description: Annotated frames or training pairs used; unset when unknown.
+            logicalTypeOptions: {minimum: 0}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 3}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 10}, recordName: TrainingDataRef}
+      - name: metrics
+        logicalType: array
+        physicalType: array
+        required: true
+        description: Evaluation and training metrics the producer reported; empty when none.
+        items:
+          logicalType: object
+          physicalType: record
+          description: One named metric value.
+          properties:
+            - name: name
+              logicalType: string
+              physicalType: string
+              required: true
+              description: Metric name in snake case (best_accuracy, distribution_shift, best_loss, onnx_max_abs_diff, ...).
+              logicalTypeOptions: {pattern: '^[a-z][a-z0-9_]*$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 1}}
+            - name: value
+              logicalType: number
+              physicalType: double
+              required: true
+              description: Metric value.
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 2}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 11}, recordName: Metric}
+      - name: image_size
+        logicalType: integer
+        physicalType: int
+        required: false
+        description: Square input size the model expects; unset when not fixed.
+        logicalTypeOptions: {minimum: 1}
+        customProperties:
+          - property: ssBinding
+            value: {unit: "{pixel}"}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 12}}
+      - name: opset
+        logicalType: integer
+        physicalType: int
+        required: false
+        description: ONNX opset version; ONNX files only.
+        logicalTypeOptions: {minimum: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 13}}
+      - name: quantization
+        logicalType: string
+        physicalType: string
+        required: false
+        description: Weight quantization (int8_static); unset for full-precision weights.
+        logicalTypeOptions: {pattern: '^[a-z0-9_]+$'}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 14}}

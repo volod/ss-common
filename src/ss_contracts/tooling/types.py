@@ -16,7 +16,7 @@ LOGICAL_TO_KINDS: dict[str, frozenset[str]] = {
     "boolean": frozenset({"boolean"}),
     "timestamp": frozenset({"timestamp"}),
     "date": frozenset({"date"}),
-    "object": frozenset({"json"}),
+    "object": frozenset({"json", "record"}),
     "array": frozenset({"array"}),
 }
 
@@ -25,11 +25,16 @@ PHYSICAL_ALIASES: dict[str, str] = {
     "bool": "boolean",
 }
 
-# Kinds an array may hold: every scalar kind and free-form objects. Nested arrays and objects
-# with declared properties are not supported.
-ITEM_KINDS: frozenset[str] = frozenset(
-    {"string", "bytes", "int", "long", "float", "double", "boolean", "timestamp", "date", "json"}
+# Kinds an array may hold: every scalar kind, free-form objects, and records. Nested arrays are
+# not supported.
+SCALAR_KINDS: frozenset[str] = frozenset(
+    {"string", "bytes", "int", "long", "float", "double", "boolean", "timestamp", "date"}
 )
+ITEM_KINDS: frozenset[str] = SCALAR_KINDS | {"json", "record"}
+
+# A record is an object with declared properties (`physicalType: record`), as a field or as array
+# items. Records nest one level: a record's own properties may not be records or hold them.
+RECORD_KIND = "record"
 
 NUMERIC_KINDS: frozenset[str] = frozenset({"int", "long", "float", "double"})
 

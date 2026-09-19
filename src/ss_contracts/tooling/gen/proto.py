@@ -2,8 +2,9 @@
 
 Types: int `int32`, long `int64`, float `float`, double `double`, timestamp
 `google.protobuf.Timestamp`, date `string` (ISO 8601 date), json `google.protobuf.Struct`, array
-`repeated T`. An optional scalar is `optional T`; message types and repeated fields have no
-separate null state, so an optional array arrives as empty and an optional object as unset.
+`repeated T`, record a message nested in the contract message and named by its `recordName`. An
+optional scalar is `optional T`; message types and repeated fields have no separate null state,
+so an optional array arrives as empty and an optional object or record as unset.
 
 Compilation uses the protoc bundled with grpcio-tools and its well-known-type includes, so no
 system protoc is needed. It writes a self-contained descriptor set (`--include_imports`) and the
@@ -39,16 +40,17 @@ class ProtoCompileError(RuntimeError):
 
 
 def _field_type(fld: FieldSpec) -> str:
+    value_type = str(fld.record_name) if fld.is_record else _PROTO_TYPES[fld.value_kind]
     if fld.kind == "array":
-        return f"repeated {_PROTO_TYPES[str(fld.item_kind)]}"
-    proto_type = _PROTO_TYPES[fld.kind]
-    if fld.required or proto_type in _WELL_KNOWN_IMPORTS:
-        return proto_type
-    return f"optional {proto_type}"
+        return f"repeated {value_type}"
+    if fld.required or fld.is_record or value_type in _WELL_KNOWN_IMPORTS:
+        return value_type
+    return f"optional {value_type}"
 
 
 def _imports(spec: ContractSpec) -> list[str]:
-    kinds = {str(fld.item_kind) if fld.kind == "array" else fld.kind for fld in spec.fields}
+    fields = [*spec.fields, *(sub for fld in spec.fields for sub in fld.record_fields)]
+    kinds = {fld.value_kind for fld in fields if not fld.is_record}
     proto_types = {_PROTO_TYPES[kind] for kind in kinds}
     paths = sorted(_WELL_KNOWN_IMPORTS[t] for t in proto_types if t in _WELL_KNOWN_IMPORTS)
     return [f'import "{path}";' for path in paths]
@@ -84,11 +86,24 @@ def render(spec: ContractSpec) -> str:
     lines.append(f"message {hints['messageName']} {{")
     lines.extend(_reserved(spec))
     for fld in spec.fields:
+        if fld.is_record:
+            lines.append(f"{_INDENT}// {fld.record_description}")
+            lines.append(f"{_INDENT}message {fld.record_name} {{")
+            lines.extend(_INDENT + line for line in _field_lines(fld.record_fields))
+            lines.append(f"{_INDENT}}}")
+            lines.append("")
+    lines.extend(_field_lines(spec.fields))
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def _field_lines(fields: tuple[FieldSpec, ...]) -> list[str]:
+    lines: list[str] = []
+    for fld in fields:
         number = fld.generation["proto"]["fieldNumber"]
         lines.append(f"{_INDENT}// {fld.description}")
         lines.append(f"{_INDENT}{_field_type(fld)} {fld.name} = {number};")
-    lines.append("}")
-    return "\n".join(lines) + "\n"
+    return lines
 
 
 def compile_proto(proto_path: pathlib.Path) -> pathlib.Path:

@@ -1,6 +1,7 @@
 """Runtime base class of the generated contract models.
 
-Generated models under `ss_contracts.models` subclass `ContractModel`. The configuration is part
+Generated models under `ss_contracts.models` subclass `ContractModel`, and the records nested in
+them subclass `ContractRecord`. The configuration is part
 of the evolution policy: an added optional field is a minor (backward-compatible) change, so a
 consumer built against an older version must accept messages carrying fields it does not know.
 Unknown fields are therefore ignored instead of rejected.
@@ -36,8 +37,8 @@ ContractTimestamp = Annotated[
 ]
 
 
-class ContractModel(BaseModel):
-    """A message whose shape is defined by a registered ODCS contract."""
+class ContractRecord(BaseModel):
+    """A record nested in a contract message (`physicalType: record`), and the base of messages."""
 
     model_config = ConfigDict(
         extra="ignore",
@@ -45,6 +46,10 @@ class ContractModel(BaseModel):
         ser_json_bytes="base64",
         val_json_bytes="base64",
     )
+
+
+class ContractModel(ContractRecord):
+    """A message whose shape is defined by a registered ODCS contract."""
 
     CONTRACT_ID: ClassVar[str] = ""
     CONTRACT_VERSION: ClassVar[str] = ""

@@ -1,0 +1,660 @@
+{
+  "binding": {},
+  "contractId": "mission-bundle",
+  "fields": {
+    "created_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "mission_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "origin": {
+      "fields": {
+        "alt": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "m"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "lat": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 90,
+            "minimum": -90
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "lon": {
+          "binding": {
+            "frame": "wgs84",
+            "unit": "deg"
+          },
+          "logicalType": "number",
+          "options": {
+            "maximum": 180,
+            "minimum": -180
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 2,
+          "required": true
+        }
+      },
+      "logicalType": "object",
+      "physicalType": "record",
+      "protoFieldNumber": 6,
+      "recordName": "GeoOrigin",
+      "required": false
+    },
+    "platform": {
+      "fields": {
+        "camera_model": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": false
+        },
+        "robot_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        }
+      },
+      "logicalType": "object",
+      "physicalType": "record",
+      "protoFieldNumber": 5,
+      "recordName": "Platform",
+      "required": true
+    },
+    "sidecars": {
+      "fields": {
+        "format": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(jsonl|srt)$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "kind": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "path": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "row_count": {
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 7,
+          "required": true
+        },
+        "sha256": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 5,
+          "required": true
+        },
+        "size_bytes": {
+          "binding": {
+            "unit": "By"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "t_end_sec": {
+          "binding": {
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 9,
+          "required": false
+        },
+        "t_start_sec": {
+          "binding": {
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 8,
+          "required": false
+        },
+        "video_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        }
+      },
+      "items": "record",
+      "logicalType": "array",
+      "physicalType": "array",
+      "protoFieldNumber": 8,
+      "recordName": "BundleSidecar",
+      "required": true
+    },
+    "start_time": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 4,
+      "required": false
+    },
+    "time_base": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^(utc|gps|tai|monotonic|media)$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "videos": {
+      "fields": {
+        "duration_sec": {
+          "binding": {
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": false
+        },
+        "fps": {
+          "binding": {
+            "unit": "Hz"
+          },
+          "logicalType": "number",
+          "options": {
+            "exclusiveMinimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 6,
+          "required": false
+        },
+        "gps_source": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(srt|atom)$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 9,
+          "required": false
+        },
+        "height": {
+          "binding": {
+            "unit": "{pixel}"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 1
+          },
+          "physicalType": "int",
+          "protoFieldNumber": 8,
+          "required": false
+        },
+        "path": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "sha256": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "size_bytes": {
+          "binding": {
+            "unit": "By"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "video_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "width": {
+          "binding": {
+            "unit": "{pixel}"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 1
+          },
+          "physicalType": "int",
+          "protoFieldNumber": 7,
+          "required": false
+        }
+      },
+      "items": "record",
+      "logicalType": "array",
+      "options": {
+        "minItems": 1
+      },
+      "physicalType": "array",
+      "protoFieldNumber": 7,
+      "recordName": "BundleVideo",
+      "required": true
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "c23043e4a4eb199f0a68af427ec3203ed9943d6bdc02ffcf5cd6c53e7349876e"
+  },
+  "history": [
+    {
+      "binding": {},
+      "contractId": "mission-bundle",
+      "fields": {
+        "created_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "mission_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "origin": {
+          "fields": {
+            "alt": {
+              "binding": {
+                "frame": "wgs84",
+                "unit": "m"
+              },
+              "logicalType": "number",
+              "physicalType": "double",
+              "protoFieldNumber": 3,
+              "required": true
+            },
+            "lat": {
+              "binding": {
+                "frame": "wgs84",
+                "unit": "deg"
+              },
+              "logicalType": "number",
+              "options": {
+                "maximum": 90,
+                "minimum": -90
+              },
+              "physicalType": "double",
+              "protoFieldNumber": 1,
+              "required": true
+            },
+            "lon": {
+              "binding": {
+                "frame": "wgs84",
+                "unit": "deg"
+              },
+              "logicalType": "number",
+              "options": {
+                "maximum": 180,
+                "minimum": -180
+              },
+              "physicalType": "double",
+              "protoFieldNumber": 2,
+              "required": true
+            }
+          },
+          "logicalType": "object",
+          "physicalType": "record",
+          "protoFieldNumber": 6,
+          "recordName": "GeoOrigin",
+          "required": false
+        },
+        "platform": {
+          "fields": {
+            "camera_model": {
+              "logicalType": "string",
+              "options": {
+                "minLength": 1
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 2,
+              "required": false
+            },
+            "robot_id": {
+              "logicalType": "string",
+              "options": {
+                "minLength": 1
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            }
+          },
+          "logicalType": "object",
+          "physicalType": "record",
+          "protoFieldNumber": 5,
+          "recordName": "Platform",
+          "required": true
+        },
+        "sidecars": {
+          "fields": {
+            "format": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^(jsonl|srt)$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 3,
+              "required": true
+            },
+            "kind": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 2,
+              "required": true
+            },
+            "path": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 4,
+              "required": true
+            },
+            "row_count": {
+              "logicalType": "integer",
+              "options": {
+                "minimum": 0
+              },
+              "physicalType": "long",
+              "protoFieldNumber": 7,
+              "required": true
+            },
+            "sha256": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 5,
+              "required": true
+            },
+            "size_bytes": {
+              "binding": {
+                "unit": "By"
+              },
+              "logicalType": "integer",
+              "options": {
+                "minimum": 0
+              },
+              "physicalType": "long",
+              "protoFieldNumber": 6,
+              "required": true
+            },
+            "t_end_sec": {
+              "binding": {
+                "unit": "s"
+              },
+              "logicalType": "number",
+              "physicalType": "double",
+              "protoFieldNumber": 9,
+              "required": false
+            },
+            "t_start_sec": {
+              "binding": {
+                "unit": "s"
+              },
+              "logicalType": "number",
+              "physicalType": "double",
+              "protoFieldNumber": 8,
+              "required": false
+            },
+            "video_id": {
+              "logicalType": "string",
+              "options": {
+                "minLength": 1
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            }
+          },
+          "items": "record",
+          "logicalType": "array",
+          "physicalType": "array",
+          "protoFieldNumber": 8,
+          "recordName": "BundleSidecar",
+          "required": true
+        },
+        "start_time": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 4,
+          "required": false
+        },
+        "time_base": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(utc|gps|tai|monotonic|media)$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "videos": {
+          "fields": {
+            "duration_sec": {
+              "binding": {
+                "unit": "s"
+              },
+              "logicalType": "number",
+              "options": {
+                "minimum": 0
+              },
+              "physicalType": "double",
+              "protoFieldNumber": 5,
+              "required": false
+            },
+            "fps": {
+              "binding": {
+                "unit": "Hz"
+              },
+              "logicalType": "number",
+              "options": {
+                "exclusiveMinimum": 0
+              },
+              "physicalType": "double",
+              "protoFieldNumber": 6,
+              "required": false
+            },
+            "gps_source": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^(srt|atom)$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 9,
+              "required": false
+            },
+            "height": {
+              "binding": {
+                "unit": "{pixel}"
+              },
+              "logicalType": "integer",
+              "options": {
+                "minimum": 1
+              },
+              "physicalType": "int",
+              "protoFieldNumber": 8,
+              "required": false
+            },
+            "path": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 2,
+              "required": true
+            },
+            "sha256": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 3,
+              "required": true
+            },
+            "size_bytes": {
+              "binding": {
+                "unit": "By"
+              },
+              "logicalType": "integer",
+              "options": {
+                "minimum": 0
+              },
+              "physicalType": "long",
+              "protoFieldNumber": 4,
+              "required": true
+            },
+            "video_id": {
+              "logicalType": "string",
+              "options": {
+                "minLength": 1
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            },
+            "width": {
+              "binding": {
+                "unit": "{pixel}"
+              },
+              "logicalType": "integer",
+              "options": {
+                "minimum": 1
+              },
+              "physicalType": "int",
+              "protoFieldNumber": 7,
+              "required": false
+            }
+          },
+          "items": "record",
+          "logicalType": "array",
+          "options": {
+            "minItems": 1
+          },
+          "physicalType": "array",
+          "protoFieldNumber": 7,
+          "recordName": "BundleVideo",
+          "required": true
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "c23043e4a4eb199f0a68af427ec3203ed9943d6bdc02ffcf5cd6c53e7349876e"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

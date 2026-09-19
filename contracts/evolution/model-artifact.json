@@ -1,0 +1,414 @@
+{
+  "binding": {},
+  "contractId": "model-artifact",
+  "fields": {
+    "artifact_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "base_model": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 6,
+      "required": true
+    },
+    "created_at": {
+      "binding": {
+        "timeBase": "utc"
+      },
+      "logicalType": "timestamp",
+      "options": {
+        "timezone": true
+      },
+      "physicalType": "timestamp",
+      "protoFieldNumber": 8,
+      "required": true
+    },
+    "derived_from": {
+      "fields": {
+        "path": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(\\.\\./)*([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "sha256": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        }
+      },
+      "logicalType": "object",
+      "physicalType": "record",
+      "protoFieldNumber": 9,
+      "recordName": "ArtifactRef",
+      "required": false
+    },
+    "format": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^(pytorch|onnx)$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "image_size": {
+      "binding": {
+        "unit": "{pixel}"
+      },
+      "logicalType": "integer",
+      "options": {
+        "minimum": 1
+      },
+      "physicalType": "int",
+      "protoFieldNumber": 12,
+      "required": false
+    },
+    "metrics": {
+      "fields": {
+        "name": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "value": {
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 2,
+          "required": true
+        }
+      },
+      "items": "record",
+      "logicalType": "array",
+      "physicalType": "array",
+      "protoFieldNumber": 11,
+      "recordName": "Metric",
+      "required": true
+    },
+    "opset": {
+      "logicalType": "integer",
+      "options": {
+        "minimum": 1
+      },
+      "physicalType": "int",
+      "protoFieldNumber": 13,
+      "required": false
+    },
+    "path": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 3,
+      "required": true
+    },
+    "producer": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 7,
+      "required": true
+    },
+    "quantization": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 14,
+      "required": false
+    },
+    "sha256": {
+      "logicalType": "string",
+      "options": {
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "size_bytes": {
+      "binding": {
+        "unit": "By"
+      },
+      "logicalType": "integer",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "long",
+      "protoFieldNumber": 5,
+      "required": true
+    },
+    "training_data": {
+      "fields": {
+        "kind": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "ref": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "sample_count": {
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 3,
+          "required": false
+        }
+      },
+      "logicalType": "object",
+      "physicalType": "record",
+      "protoFieldNumber": 10,
+      "recordName": "TrainingDataRef",
+      "required": false
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "6183b3219f4c0e7d265e14fe6ea2b5135067df2e90bccf5dab0c9f756c6a8a4f"
+  },
+  "history": [
+    {
+      "binding": {},
+      "contractId": "model-artifact",
+      "fields": {
+        "artifact_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "base_model": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "created_at": {
+          "binding": {
+            "timeBase": "utc"
+          },
+          "logicalType": "timestamp",
+          "options": {
+            "timezone": true
+          },
+          "physicalType": "timestamp",
+          "protoFieldNumber": 8,
+          "required": true
+        },
+        "derived_from": {
+          "fields": {
+            "path": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^(\\.\\./)*([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            },
+            "sha256": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 2,
+              "required": true
+            }
+          },
+          "logicalType": "object",
+          "physicalType": "record",
+          "protoFieldNumber": 9,
+          "recordName": "ArtifactRef",
+          "required": false
+        },
+        "format": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^(pytorch|onnx)$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "image_size": {
+          "binding": {
+            "unit": "{pixel}"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 1
+          },
+          "physicalType": "int",
+          "protoFieldNumber": 12,
+          "required": false
+        },
+        "metrics": {
+          "fields": {
+            "name": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            },
+            "value": {
+              "logicalType": "number",
+              "physicalType": "double",
+              "protoFieldNumber": 2,
+              "required": true
+            }
+          },
+          "items": "record",
+          "logicalType": "array",
+          "physicalType": "array",
+          "protoFieldNumber": 11,
+          "recordName": "Metric",
+          "required": true
+        },
+        "opset": {
+          "logicalType": "integer",
+          "options": {
+            "minimum": 1
+          },
+          "physicalType": "int",
+          "protoFieldNumber": 13,
+          "required": false
+        },
+        "path": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^([^/\\\\.][^/\\\\]*/)*[^/\\\\.][^/\\\\]*$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 3,
+          "required": true
+        },
+        "producer": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 7,
+          "required": true
+        },
+        "quantization": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 14,
+          "required": false
+        },
+        "sha256": {
+          "logicalType": "string",
+          "options": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "size_bytes": {
+          "binding": {
+            "unit": "By"
+          },
+          "logicalType": "integer",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "long",
+          "protoFieldNumber": 5,
+          "required": true
+        },
+        "training_data": {
+          "fields": {
+            "kind": {
+              "logicalType": "string",
+              "options": {
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 1,
+              "required": true
+            },
+            "ref": {
+              "logicalType": "string",
+              "options": {
+                "minLength": 1
+              },
+              "physicalType": "string",
+              "protoFieldNumber": 2,
+              "required": true
+            },
+            "sample_count": {
+              "logicalType": "integer",
+              "options": {
+                "minimum": 0
+              },
+              "physicalType": "long",
+              "protoFieldNumber": 3,
+              "required": false
+            }
+          },
+          "logicalType": "object",
+          "physicalType": "record",
+          "protoFieldNumber": 10,
+          "recordName": "TrainingDataRef",
+          "required": false
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "6183b3219f4c0e7d265e14fe6ea2b5135067df2e90bccf5dab0c9f756c6a8a4f"
+      },
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

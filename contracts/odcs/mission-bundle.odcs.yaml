@@ -1,0 +1,338 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: mission-bundle
+version: 1.0.0
+status: active
+name: Mission bundle manifest
+domain: mission
+description:
+  purpose: >-
+    The files of one recorded mission as offline and deep analysis consume them: videos,
+    their sensor sidecars, the time base of sidecar rows, the GPS origin of the local ENU
+    frame, and the platform that recorded them. Written as mission.json at the bundle root
+    by ss-video and validated by ss-sens and ss-fusion before they read the bundle.
+schema:
+  - name: mission_bundle
+    logicalType: object
+    physicalType: file
+    customProperties:
+      - property: schemaGeneration
+        value:
+          pydantic: {className: MissionBundle}
+          avro: {namespace: ss.contracts.mission, recordName: MissionBundle}
+          proto:
+            package: ss.contracts.mission.v1
+            messageName: MissionBundle
+            goPackage: github.com/volod/ss-common/gen/go/mission/v1;missionv1
+    properties:
+      - name: mission_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: 'Mission identifier: the missions row id, or the video stem for a local run.'
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: created_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Time the manifest was built.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: time_base
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Time base of sidecar row times (the t or timestamp key) and video offsets; media means seconds from the start of the video the sidecar belongs to.
+        logicalTypeOptions: {pattern: '^(utc|gps|tai|monotonic|media)$'}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: start_time
+        logicalType: timestamp
+        physicalType: timestamp
+        required: false
+        description: Wall-clock time of media offset 0 of the first video, from its container creation time; unset when the container carries none.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: platform
+        logicalType: object
+        physicalType: record
+        required: true
+        description: The recording platform.
+        properties:
+          - name: robot_id
+            logicalType: string
+            physicalType: string
+            required: true
+            description: Platform that recorded the mission (missions.robot_id; robot_0 by default).
+            logicalTypeOptions: {minLength: 1}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 1}}
+          - name: camera_model
+            logicalType: string
+            physicalType: string
+            required: false
+            description: Camera or vehicle model from the video container tags; unset when absent.
+            logicalTypeOptions: {minLength: 1}
+            customProperties:
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 2}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}, recordName: Platform}
+      - name: origin
+        logicalType: object
+        physicalType: record
+        required: false
+        description: 'GPS origin of the mission ENU frame: the first GPS fix of the first video, as platform fusion and the missions gps_origin_json choose it; unset without GPS.'
+        properties:
+          - name: lat
+            logicalType: number
+            physicalType: double
+            required: true
+            description: Latitude of the origin.
+            logicalTypeOptions: {minimum: -90, maximum: 90}
+            customProperties:
+              - property: ssBinding
+                value: {frame: wgs84, unit: deg}
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 1}}
+          - name: lon
+            logicalType: number
+            physicalType: double
+            required: true
+            description: Longitude of the origin.
+            logicalTypeOptions: {minimum: -180, maximum: 180}
+            customProperties:
+              - property: ssBinding
+                value: {frame: wgs84, unit: deg}
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 2}}
+          - name: alt
+            logicalType: number
+            physicalType: double
+            required: true
+            description: Altitude of the origin; 0 when the fix has none.
+            customProperties:
+              - property: ssBinding
+                value: {frame: wgs84, unit: m}
+              - property: fieldGeneration
+                value: {proto: {fieldNumber: 3}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}, recordName: GeoOrigin}
+      - name: videos
+        logicalType: array
+        physicalType: array
+        required: true
+        description: Videos of the mission.
+        items:
+          logicalType: object
+          physicalType: record
+          description: One video file of the mission.
+          properties:
+            - name: video_id
+              logicalType: string
+              physicalType: string
+              required: true
+              description: 'Video identifier: the file stem.'
+              logicalTypeOptions: {minLength: 1}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 1}}
+            - name: path
+              logicalType: string
+              physicalType: string
+              required: true
+              description: POSIX path relative to the directory holding the manifest; no absolute paths, backslashes, or segments starting with a dot.
+              logicalTypeOptions: {pattern: '^([^/\\.][^/\\]*/)*[^/\\.][^/\\]*$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 2}}
+            - name: sha256
+              logicalType: string
+              physicalType: string
+              required: true
+              description: SHA-256 of the file content, lowercase hex.
+              logicalTypeOptions: {pattern: '^[0-9a-f]{64}$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 3}}
+            - name: size_bytes
+              logicalType: integer
+              physicalType: long
+              required: true
+              description: File size.
+              logicalTypeOptions: {minimum: 0}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: By}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 4}}
+            - name: duration_sec
+              logicalType: number
+              physicalType: double
+              required: false
+              description: Container duration.
+              logicalTypeOptions: {minimum: 0}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: s}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 5}}
+            - name: fps
+              logicalType: number
+              physicalType: double
+              required: false
+              description: Average frame rate of the video stream.
+              logicalTypeOptions: {exclusiveMinimum: 0}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: Hz}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 6}}
+            - name: width
+              logicalType: integer
+              physicalType: int
+              required: false
+              description: Frame width.
+              logicalTypeOptions: {minimum: 1}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: "{pixel}"}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 7}}
+            - name: height
+              logicalType: integer
+              physicalType: int
+              required: false
+              description: Frame height.
+              logicalTypeOptions: {minimum: 1}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: "{pixel}"}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 8}}
+            - name: gps_source
+              logicalType: string
+              physicalType: string
+              required: false
+              description: 'Where GPS for this video comes from: srt (DJI sidecar) or atom (ISO 6709 container tag); unset when the video has no GPS.'
+              logicalTypeOptions: {pattern: '^(srt|atom)$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 9}}
+        logicalTypeOptions: {minItems: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}, recordName: BundleVideo}
+      - name: sidecars
+        logicalType: array
+        physicalType: array
+        required: true
+        description: Sensor sidecars of the videos; empty when the mission has none.
+        items:
+          logicalType: object
+          physicalType: record
+          description: One sensor sidecar file of a video.
+          properties:
+            - name: video_id
+              logicalType: string
+              physicalType: string
+              required: true
+              description: Video this sidecar belongs to.
+              logicalTypeOptions: {minLength: 1}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 1}}
+            - name: kind
+              logicalType: string
+              physicalType: string
+              required: true
+              description: Sensor kind from the file name <video>.<kind>.jsonl (imu, baro, wind, env, gas, adsb, acoustic_events, ...); gps for a DJI .srt file.
+              logicalTypeOptions: {pattern: '^[a-z][a-z0-9_]*$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 2}}
+            - name: format
+              logicalType: string
+              physicalType: string
+              required: true
+              description: 'File format: jsonl rows or a DJI srt file.'
+              logicalTypeOptions: {pattern: '^(jsonl|srt)$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 3}}
+            - name: path
+              logicalType: string
+              physicalType: string
+              required: true
+              description: POSIX path relative to the directory holding the manifest; no absolute paths, backslashes, or segments starting with a dot.
+              logicalTypeOptions: {pattern: '^([^/\\.][^/\\]*/)*[^/\\.][^/\\]*$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 4}}
+            - name: sha256
+              logicalType: string
+              physicalType: string
+              required: true
+              description: SHA-256 of the file content, lowercase hex.
+              logicalTypeOptions: {pattern: '^[0-9a-f]{64}$'}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 5}}
+            - name: size_bytes
+              logicalType: integer
+              physicalType: long
+              required: true
+              description: File size.
+              logicalTypeOptions: {minimum: 0}
+              customProperties:
+                - property: ssBinding
+                  value: {unit: By}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 6}}
+            - name: row_count
+              logicalType: integer
+              physicalType: long
+              required: true
+              description: 'Rows the loader reads: JSON objects in a jsonl file, GPS fixes in an srt file.'
+              logicalTypeOptions: {minimum: 0}
+              customProperties:
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 7}}
+            - name: t_start_sec
+              logicalType: number
+              physicalType: double
+              required: false
+              description: Earliest row time in the bundle time base; unset when no row has one.
+              customProperties:
+                - property: ssBinding
+                  value: {unit: s}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 8}}
+            - name: t_end_sec
+              logicalType: number
+              physicalType: double
+              required: false
+              description: Latest row time in the bundle time base; unset when no row has one.
+              customProperties:
+                - property: ssBinding
+                  value: {unit: s}
+                - property: fieldGeneration
+                  value: {proto: {fieldNumber: 9}}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}, recordName: BundleSidecar}

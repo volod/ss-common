@@ -7,8 +7,9 @@ text comparison.
 
 Types: string `str`, bytes `ContractBytes` (standard base64 in JSON), int and long `int` (bounded to int32 and
 int64), float and double `float`, boolean `bool`, timestamp `ContractTimestamp` (an aware datetime), date
-`datetime.date`, json `dict[str, Any]`, array `list[T]`. An optional field is `T | None` with a
-default of `None`.
+`datetime.date`, json `dict[str, Any]`, array `list[T]`, record a `ContractRecord` subclass
+named by its `recordName` and defined in the same module before the message class. An optional
+field is `T | None` with a default of `None`.
 """
 
 import json
@@ -90,9 +91,12 @@ def _render_value(value: Any, indent: str) -> str:
     return _literal(value)
 
 
+def _value_type(fld: FieldSpec) -> str:
+    return str(fld.record_name) if fld.is_record else _PY_TYPES[fld.value_kind]
+
+
 def _annotation(fld: FieldSpec) -> str:
-    item = _PY_TYPES[str(fld.item_kind)] if fld.kind == "array" else ""
-    base = f"list[{item}]" if fld.kind == "array" else _PY_TYPES[fld.kind]
+    base = f"list[{_value_type(fld)}]" if fld.kind == "array" else _value_type(fld)
     return base if fld.required else f"{base} | None"
 
 
@@ -155,8 +159,13 @@ def _docstring(text: str) -> list[str]:
     ]
 
 
+def _all_fields(spec: ContractSpec) -> list[FieldSpec]:
+    return [*spec.fields, *(sub for fld in spec.fields for sub in fld.record_fields)]
+
+
 def _imports(spec: ContractSpec) -> list[str]:
-    kinds = {fld.kind for fld in spec.fields} | {fld.item_kind for fld in spec.fields}
+    fields = _all_fields(spec)
+    kinds = {fld.kind for fld in fields} | {fld.item_kind for fld in fields}
     lines: list[str] = []
     if "date" in kinds:
         lines.append("import datetime")
@@ -168,6 +177,7 @@ def _imports(spec: ContractSpec) -> list[str]:
     lines.append("")
     base_names = ["ContractModel"]
     base_names += ["ContractBytes"] if "bytes" in kinds else []
+    base_names += ["ContractRecord"] if "record" in kinds else []
     base_names += ["ContractTimestamp"] if "timestamp" in kinds else []
     lines.append(f"from ss_contracts.base import {', '.join(sorted(base_names))}")
     return lines
@@ -179,6 +189,14 @@ def render_module(spec: ContractSpec, source_label: str) -> str:
         f"Contract {spec.contract_id} {spec.version}, generated from {source_label}; do not edit."
     )
     lines = [f'"""{header}"""', "", *_imports(spec), "", ""]
+    for fld in spec.fields:
+        if fld.is_record:
+            lines.append(f"class {fld.record_name}(ContractRecord):")
+            lines.extend(_docstring(fld.record_description))
+            lines.append("")
+            for sub in fld.record_fields:
+                lines.extend(_render_field(sub))
+            lines.extend(["", ""])
     lines.append(f"class {class_name(spec)}(ContractModel):")
     lines.extend(_docstring(spec.purpose))
     lines.append("")

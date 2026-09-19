@@ -5,7 +5,7 @@ description, binding) and an empty Parquet file (`<id>.schema.parquet`) whose fo
 same schema, readable with `pyarrow.parquet.read_schema`. Types: string `large_string`, bytes
 `large_binary`, int `int32`, long `int64`, float `float32`, double `float64`, boolean `bool`,
 timestamp `timestamp[us, tz=UTC]`, date `date32`, json `large_string` (JSON text), array
-`large_list<T>`.
+`large_list<T>`, record `struct` (its descriptor entry lists the struct `fields`).
 """
 
 import json
@@ -29,28 +29,30 @@ _ARROW_TYPES: dict[str, str] = {
 
 
 def arrow_type_name(fld: FieldSpec) -> str:
-    if fld.kind == "array":
-        return f"large_list<{_ARROW_TYPES[str(fld.item_kind)]}>"
-    return _ARROW_TYPES[fld.kind]
+    value = "struct" if fld.is_record else _ARROW_TYPES[fld.value_kind]
+    return f"large_list<{value}>" if fld.kind == "array" else value
+
+
+def _descriptor_entry(fld: FieldSpec) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "name": fld.name,
+        "arrow_type": arrow_type_name(fld),
+        "nullable": not fld.required,
+        "description": fld.description,
+    }
+    if fld.binding:
+        entry["ss_binding"] = dict(fld.binding)
+    if fld.is_record:
+        entry["fields"] = [_descriptor_entry(sub) for sub in fld.record_fields]
+    return entry
 
 
 def build_descriptor(spec: ContractSpec) -> dict[str, Any]:
-    fields = []
-    for fld in spec.fields:
-        entry: dict[str, Any] = {
-            "name": fld.name,
-            "arrow_type": arrow_type_name(fld),
-            "nullable": not fld.required,
-            "description": fld.description,
-        }
-        if fld.binding:
-            entry["ss_binding"] = dict(fld.binding)
-        fields.append(entry)
     return {
         "contract_id": spec.contract_id,
         "version": spec.version,
         "entity": spec.name,
-        "fields": fields,
+        "fields": [_descriptor_entry(fld) for fld in spec.fields],
     }
 
 
@@ -76,20 +78,25 @@ def _arrow_scalar(kind: str) -> Any:
     return factories[kind]()
 
 
+def _arrow_field(fld: FieldSpec) -> Any:
+    import pyarrow as pa
+
+    if fld.is_record:
+        value_type = pa.struct([_arrow_field(sub) for sub in fld.record_fields])
+    else:
+        value_type = _arrow_scalar(fld.value_kind)
+    arrow_type = pa.large_list(value_type) if fld.kind == "array" else value_type
+    metadata = {"description": fld.description}
+    if fld.binding:
+        metadata["ss_binding"] = json.dumps(dict(fld.binding), sort_keys=True)
+    return pa.field(fld.name, arrow_type, nullable=not fld.required, metadata=metadata)
+
+
 def arrow_schema(spec: ContractSpec) -> Any:
     """The contract as a `pyarrow.Schema` with field descriptions in the field metadata."""
     import pyarrow as pa
 
-    fields = []
-    for fld in spec.fields:
-        if fld.kind == "array":
-            arrow_type = pa.large_list(_arrow_scalar(str(fld.item_kind)))
-        else:
-            arrow_type = _arrow_scalar(fld.kind)
-        metadata = {"description": fld.description}
-        if fld.binding:
-            metadata["ss_binding"] = json.dumps(dict(fld.binding), sort_keys=True)
-        fields.append(pa.field(fld.name, arrow_type, nullable=not fld.required, metadata=metadata))
+    fields = [_arrow_field(fld) for fld in spec.fields]
     contract = {"id": spec.contract_id, "version": spec.version}
     return pa.schema(fields, metadata={"ss_contract": json.dumps(contract, sort_keys=True)})
 

@@ -6,13 +6,18 @@
 | `avro` | `avro.namespace`, `avro.recordName` | -- |
 | `proto` | `proto.package`, `proto.messageName`; optional `goPackage`, `reserved`, `reservedNames` | `proto.fieldNumber` |
 | `parquet` | -- | -- |
+
+A record's own properties need `proto.fieldNumber` too, unique within the record; the message
+`reserved` numbers and names apply to the top-level message only. A record name
+(`fieldGeneration.recordName`, checked by the authoring rules) must differ from the message's
+type name in each format.
 """
 
 import re
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from ss_contracts.tooling.odcs import ContractSpec
+from ss_contracts.tooling.odcs import ContractSpec, FieldSpec
 from ss_contracts.tooling.types import FORMATS
 
 __all__ = ["FORMATS", "generation_errors"]
@@ -31,14 +36,28 @@ def _require(hints: Mapping[str, Any], key: str, pattern: re.Pattern[str], fmt: 
     return []
 
 
+def _collision_errors(spec: ContractSpec, fmt: str, key: str) -> list[str]:
+    type_name = spec.generation_hints(fmt).get(key)
+    return [
+        f"field '{fld.name}': recordName '{fld.record_name}' equals {fmt}.{key}"
+        for fld in spec.fields
+        if fld.is_record and fld.record_name == type_name
+    ]
+
+
 def _pydantic_errors(spec: ContractSpec) -> list[str]:
-    return _require(spec.generation_hints("pydantic"), "className", _TYPE_NAME_RE, "pydantic")
+    hints = spec.generation_hints("pydantic")
+    return _require(hints, "className", _TYPE_NAME_RE, "pydantic") + _collision_errors(
+        spec, "pydantic", "className"
+    )
 
 
 def _avro_errors(spec: ContractSpec) -> list[str]:
     hints = spec.generation_hints("avro")
-    return _require(hints, "namespace", _AVRO_NAMESPACE_RE, "avro") + _require(
-        hints, "recordName", _TYPE_NAME_RE, "avro"
+    return (
+        _require(hints, "namespace", _AVRO_NAMESPACE_RE, "avro")
+        + _require(hints, "recordName", _TYPE_NAME_RE, "avro")
+        + _collision_errors(spec, "avro", "recordName")
     )
 
 
@@ -78,20 +97,31 @@ def _field_number_error(number: Any, used: set[int], reserved: list[int]) -> str
     return None
 
 
+def _field_numbers_errors(
+    fields: tuple[FieldSpec, ...], reserved: list[int], reserved_names: list[str], label: str
+) -> list[str]:
+    errors: list[str] = []
+    used: set[int] = set()
+    for fld in fields:
+        number = fld.generation.get("proto", {}).get("fieldNumber")
+        error = _field_number_error(number, used, reserved)
+        if error:
+            errors.append(f"{label}'{fld.name}': {error}")
+        if fld.name in reserved_names:
+            errors.append(f"{label}'{fld.name}': name is listed in proto reservedNames")
+        if fld.is_record:
+            nested = f"{label}'{fld.name}' record field "
+            errors.extend(_field_numbers_errors(fld.record_fields, [], [], nested))
+    return errors
+
+
 def _proto_errors(spec: ContractSpec) -> list[str]:
     hints = spec.generation_hints("proto")
     errors = _proto_message_errors(hints)
     reserved = _int_list(hints.get("reserved")) or []
     reserved_names = hints.get("reservedNames") or []
-    used: set[int] = set()
-    for fld in spec.fields:
-        number = fld.generation.get("proto", {}).get("fieldNumber")
-        error = _field_number_error(number, used, reserved)
-        if error:
-            errors.append(f"field '{fld.name}': {error}")
-        if fld.name in reserved_names:
-            errors.append(f"field '{fld.name}': name is listed in proto reservedNames")
-    return errors
+    errors.extend(_field_numbers_errors(spec.fields, reserved, reserved_names, "field "))
+    return errors + _collision_errors(spec, "proto", "messageName")
 
 
 _CHECKS: dict[str, Callable[[ContractSpec], list[str]]] = {

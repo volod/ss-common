@@ -16,10 +16,11 @@ from ss_contracts.tooling.binding import BINDING_PROPERTY, normalize_binding
 from ss_contracts.tooling.rules import (
     find_custom_property,
     official_schema_errors,
+    record_name,
     schema_object,
     ss_rule_errors,
 )
-from ss_contracts.tooling.types import canonical_kind
+from ss_contracts.tooling.types import RECORD_KIND, canonical_kind
 
 SCHEMA_GEN_PROPERTY = "schemaGeneration"
 FIELD_GEN_PROPERTY = "fieldGeneration"
@@ -47,6 +48,25 @@ class FieldSpec:
     item_kind: str | None = None
     binding: Mapping[str, str] = field(default_factory=dict)
     generation: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    record_name: str | None = None
+    record_fields: tuple["FieldSpec", ...] = ()
+    # What one record is: `items.description` for an array of records, else the field's.
+    record_description: str = ""
+
+    @property
+    def is_record(self) -> bool:
+        """The field is a record or an array of records."""
+        return RECORD_KIND in (self.kind, self.item_kind)
+
+    @property
+    def value_kind(self) -> str:
+        """The kind of one value: the item kind of an array, else the field kind."""
+        return str(self.item_kind) if self.kind == "array" else self.kind
+
+
+def iter_records(fields: tuple[FieldSpec, ...]) -> Iterator[FieldSpec]:
+    """The record fields of a message, in field order (records nest one level)."""
+    return (fld for fld in fields if fld.is_record)
 
 
 @dataclass(frozen=True)
@@ -77,6 +97,19 @@ def _generation(custom_properties: Any, name: str) -> dict[str, Mapping[str, Any
     return {str(fmt): hints for fmt, hints in value.items() if isinstance(hints, Mapping)}
 
 
+def _record_parts(prop: Mapping[str, Any], kind: str, items: Any) -> dict[str, Any]:
+    body = items if kind == "array" and isinstance(items, Mapping) else prop
+    if canonical_kind(str(body.get("physicalType", ""))) != RECORD_KIND:
+        return {}
+    description = body.get("description") or prop["description"]
+    return {
+        # `fieldGeneration.recordName` names the record type in every output format.
+        "record_name": str(record_name(prop)),
+        "record_fields": tuple(_field_spec(sub) for sub in _iter_properties(body)),
+        "record_description": " ".join(str(description).split()),
+    }
+
+
 def _field_spec(prop: Mapping[str, Any]) -> FieldSpec:
     custom = prop.get("customProperties")
     items = prop.get("items")
@@ -84,16 +117,18 @@ def _field_spec(prop: Mapping[str, Any]) -> FieldSpec:
     if isinstance(items, Mapping):
         item_kind = canonical_kind(str(items.get("physicalType", "")))
     options = prop.get("logicalTypeOptions")
+    kind = canonical_kind(str(prop["physicalType"]))
     return FieldSpec(
         name=str(prop["name"]),
         logical_type=str(prop["logicalType"]),
-        kind=canonical_kind(str(prop["physicalType"])),
+        kind=kind,
         required=bool(prop["required"]),
         description=" ".join(str(prop["description"]).split()),
         options=dict(options) if isinstance(options, Mapping) else {},
         item_kind=item_kind,
         binding=normalize_binding(find_custom_property(custom, BINDING_PROPERTY)),
         generation=_generation(custom, FIELD_GEN_PROPERTY),
+        **_record_parts(prop, kind, items),
     )
 
 

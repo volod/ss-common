@@ -7,7 +7,7 @@
 | `src/ss_contracts/` | Contract package: `base` (runtime model base and wire types), committed `models/`, and `tooling/` (the `ss-contracts` CLI); see [contracts](contracts.md) |
 | `contracts/` | Contract registry, ODCS sources, MQTT topic map (`topics.yaml`), evolution baselines; `contracts/generated/` is gitignored |
 | `src/ss_kit/` | Runtime-helper package: `package_version()`, `py.typed`, and `ss_kit.quality` (spec-plan, doc-link, plan-status, and footprint gates) |
-| `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree and golden messages) |
+| `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree, golden messages, and golden manifests) |
 | `scripts/shared/common.sh` | `ssc_load_env`: `.env`, `DATA_DIR`, uv and tool caches, uv link mode |
 
 Importing `ss_kit`, `ss_contracts`, or `ss_kit.quality.footprint` writes nothing to stdout or

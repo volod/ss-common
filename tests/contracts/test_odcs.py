@@ -67,6 +67,55 @@ def _set_binding(name: str | None, value: Any) -> Mutation:
     return mutate
 
 
+def _sub(name: str) -> dict[str, Any]:
+    return {
+        "name": name,
+        "logicalType": "string",
+        "physicalType": "string",
+        "required": True,
+        "description": f"Nested {name}.",
+        "customProperties": [
+            {"property": "fieldGeneration", "value": {"proto": {"fieldNumber": 1}}}
+        ],
+    }
+
+
+def _field_gen(item: dict[str, Any]) -> dict[str, Any]:
+    entries = item.setdefault("customProperties", [])
+    for entry in entries:
+        if entry["property"] == "fieldGeneration":
+            value: dict[str, Any] = entry["value"]
+            return value
+    entries.append({"property": "fieldGeneration", "value": {}})
+    value = entries[-1]["value"]
+    return value
+
+
+def _record_sub(name: str, subs: list[dict[str, Any]], record_name: str) -> dict[str, Any]:
+    sub = {**_sub(name), "logicalType": "object", "physicalType": "record", "properties": subs}
+    sub["customProperties"] = [
+        {"property": "fieldGeneration", "value": {"recordName": record_name}}
+    ]
+    return sub
+
+
+def _make_record(
+    doc: dict[str, Any], name: str, subs: list[dict[str, Any]], record_name: str | None
+) -> None:
+    item = prop(doc, name)
+    item.update(physicalType="record", properties=subs)
+    if record_name is not None:
+        _field_gen(item)["recordName"] = record_name
+
+
+def _make_record_items(
+    doc: dict[str, Any], name: str, subs: list[dict[str, Any]], record_name: str
+) -> None:
+    item = prop(doc, name)
+    item["items"] = {"logicalType": "object", "physicalType": "record", "properties": subs}
+    _field_gen(item)["recordName"] = record_name
+
+
 CASES: dict[str, tuple[Mutation, str]] = {
     "api version": (_set(("apiVersion",), "v3.0.2"), "apiVersion must be v3.1.0"),
     "kebab id": (_set(("id",), "Sample_Reading"), "must be kebab-case"),
@@ -96,11 +145,48 @@ CASES: dict[str, tuple[Mutation, str]] = {
             "items",
             {"logicalType": "object", "physicalType": "json", "properties": [{"name": "x"}]},
         ),
-        "nested object properties",
+        "declares no properties",
     ),
     "nested object": (
         _set_prop("decoded_object", "properties", [{"name": "x", "logicalType": "string"}]),
-        "nested object properties",
+        "declares no properties",
+    ),
+    "record without properties": (
+        lambda d: _make_record(d, "decoded_object", [], "Decoded"),
+        "a record needs at least one property",
+    ),
+    "record name missing": (
+        lambda d: _make_record(d, "decoded_object", [_sub("x")], None),
+        "recordName must match",
+    ),
+    "record name not pascal": (
+        lambda d: _make_record(d, "decoded_object", [_sub("x")], "decoded"),
+        "recordName must match",
+    ),
+    "record name on scalar": (
+        lambda d: _field_gen(prop(d, "rssi")).update(recordName="Rssi"),
+        "only allowed on records",
+    ),
+    "record nested in record": (
+        lambda d: _make_record(
+            d, "decoded_object", [_record_sub("inner", [_sub("y")], "Inner")], "Outer"
+        ),
+        "records nest one level",
+    ),
+    "record property rule": (
+        lambda d: _make_record(d, "decoded_object", [{**_sub("x"), "description": ""}], "Rec"),
+        "property 'decoded_object': property 'x': description is required",
+    ),
+    "record property name": (
+        lambda d: _make_record(d, "decoded_object", [_sub("x"), _sub("x")], "Rec"),
+        "property name 'x' is duplicated",
+    ),
+    "record name used twice": (
+        lambda d: (
+            _make_record(d, "decoded_object", [_sub("x")], "Rec"),
+            _make_record_items(d, "tags", [_sub("y")], "Rec"),
+        ),
+        "recordName 'Rec' is used twice",
     ),
     "option": (_set_prop("dev_eui", "logicalTypeOptions", {"minItems": 1}), "minItems is not"),
     "naive timestamp": (
@@ -123,6 +209,24 @@ def test_rule_violations_are_reported(case: str) -> None:
     mutate, expected = CASES[case]
     errors = _errors(mutate)
     assert any(expected in error for error in errors), errors
+
+
+def test_records_normalize_with_their_fields() -> None:
+    doc = _doc()
+    _make_record(doc, "decoded_object", [_sub("x"), {**_sub("y"), "required": False}], "Decoded")
+    _make_record_items(doc, "tags", [_sub("z")], "Tag")
+    fields = {fld.name: fld for fld in parse_contract(doc, READING).fields}
+    decoded, tags = fields["decoded_object"], fields["tags"]
+    assert (decoded.kind, decoded.record_name, decoded.is_record) == ("record", "Decoded", True)
+    assert [(f.name, f.required) for f in decoded.record_fields] == [("x", True), ("y", False)]
+    assert (tags.kind, tags.item_kind, tags.value_kind, tags.record_name) == (
+        "array",
+        "record",
+        "record",
+        "Tag",
+    )
+    assert [f.name for f in tags.record_fields] == ["z"]
+    assert not fields["rssi"].is_record and fields["rssi"].record_fields == ()
 
 
 def test_all_findings_are_collected() -> None:

@@ -221,3 +221,119 @@ def test_classify_change_orders_details_deterministically() -> None:
         "added optional field 'c'",
         "added optional field 'd'",
     ]
+
+
+def _nested(name: str, number: int, required: bool = True) -> dict[str, Any]:
+    return {
+        "name": name,
+        "logicalType": "string",
+        "physicalType": "string",
+        "required": required,
+        "description": "Nested field.",
+        "customProperties": [
+            {"property": "fieldGeneration", "value": {"proto": {"fieldNumber": number}}}
+        ],
+    }
+
+
+def _add_record(doc: dict[str, Any]) -> None:
+    properties(doc).append(
+        {
+            "name": "files",
+            "logicalType": "array",
+            "physicalType": "array",
+            "required": False,
+            "description": "Files.",
+            "items": {
+                "logicalType": "object",
+                "physicalType": "record",
+                "properties": [_nested("path", 1), _nested("sha256", 2)],
+            },
+            "customProperties": [
+                {
+                    "property": "fieldGeneration",
+                    "value": {"proto": {"fieldNumber": 20}, "recordName": "FileEntry"},
+                }
+            ],
+        }
+    )
+
+
+def _record_props(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = prop(doc, "files")["items"]["properties"]
+    return items
+
+
+def _nested_remove(name: str) -> Mutation:
+    return lambda doc: _record_props(doc).remove(
+        next(p for p in _record_props(doc) if p["name"] == name)
+    )
+
+
+RECORD_CASES: dict[str, tuple[Mutation, str, str, str]] = {
+    # name: (mutation, version that passes, change class, expected detail)
+    "nested optional added": (
+        lambda doc: _record_props(doc).append(_nested("size", 3, required=False)),
+        "1.3.0",
+        CHANGE_BACKWARD,
+        "added optional field 'files.size'",
+    ),
+    "nested required added": (
+        lambda doc: _record_props(doc).append(_nested("size", 3)),
+        "2.0.0",
+        CHANGE_BREAKING,
+        "added required field 'files.size'",
+    ),
+    "nested removed": (
+        _nested_remove("sha256"),
+        "2.0.0",
+        CHANGE_BREAKING,
+        "removed field 'files.sha256'",
+    ),
+    "nested kind": (
+        lambda doc: _record_props(doc)[0].update(physicalType="bytes"),
+        "2.0.0",
+        CHANGE_BREAKING,
+        "field 'files.path' physicalType changed",
+    ),
+    "record renamed": (
+        lambda doc: custom(prop(doc, "files"), "fieldGeneration").update(recordName="Entry"),
+        "2.0.0",
+        CHANGE_BREAKING,
+        "field 'files' recordName changed 'FileEntry' -> 'Entry'",
+    ),
+}
+
+
+@pytest.mark.parametrize("case", sorted(RECORD_CASES))
+def test_record_changes_follow_the_policy(
+    registry: Registry, edit_contract: EditContract, case: str
+) -> None:
+    edit_contract("sample-reading", _with_version("1.2.0", _add_record))
+    item = next(c for c in check_evolution(registry).contracts if c.contract_id == "sample-reading")
+    assert item.change_class == CHANGE_BACKWARD and item.errors == []
+    assert freeze_baselines(registry)[1] == []
+
+    mutate, passing, change_class, detail = RECORD_CASES[case]
+    edit_contract("sample-reading", mutate)
+    item = next(c for c in check_evolution(registry).contracts if c.contract_id == "sample-reading")
+    assert item.change_class == change_class
+    assert any(detail in e for e in item.errors), item.errors
+    edit_contract("sample-reading", _with_version(passing, lambda doc: None))
+    assert _errors(registry) == []
+
+
+def test_record_proto_number_reuse_fails(registry: Registry, edit_contract: EditContract) -> None:
+    edit_contract("sample-reading", _with_version("1.2.0", _add_record))
+    assert freeze_baselines(registry)[1] == []
+
+    def reuse(doc: dict[str, Any]) -> None:
+        _nested_remove("sha256")(doc)
+        _record_props(doc).append(_nested("digest", 2))
+
+    edit_contract("sample-reading", _with_version("2.0.0", reuse))
+    errors = _errors(registry)
+    assert any(
+        "record FileEntry proto field number 2 was 'sha256' in 1.2.0 and is 'digest'" in e
+        for e in errors
+    ), errors

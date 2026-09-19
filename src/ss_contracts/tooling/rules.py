@@ -8,8 +8,13 @@ A contract is valid when it passes the vendored official ODCS JSON Schema and th
 - every property has a snake-case `name` that is unique and is not a Python keyword, a proto3
   reserved word, a Pydantic model attribute, or a type name the generated module uses
   (`GENERATED_NAMES`); a `description`; an explicit `required`; a
-  `logicalType` and a `physicalType` from the [type system](types.py); arrays declare scalar
-  `items`; free-form objects (`object` / `json`) declare no nested `properties`;
+  `logicalType` and a `physicalType` from the [type system](types.py); arrays declare scalar,
+  free-form object, or record `items`; free-form objects (`object` / `json`) declare no nested
+  `properties`;
+- a record (`object` / `record`, as a field or as array items) declares at least one nested
+  property, each following these same rules except that it may not be a record or hold records,
+  and names its type in `fieldGeneration.recordName` (PascalCase, unique in the contract); array
+  items may carry a `description` of one record, which otherwise reuses the field's;
 - `logicalTypeOptions` use only the keys the generators enforce (`SUPPORTED_OPTIONS`);
 - `ssBinding` values follow the [binding rules](binding.py);
 - the YAML source is ASCII, so every generated artifact is too.
@@ -38,9 +43,13 @@ from ss_contracts.tooling.types import (
     ITEM_KINDS,
     LOGICAL_TO_KINDS,
     NUMERIC_KINDS,
+    RECORD_KIND,
     canonical_kind,
     kind_compatible,
 )
+
+FIELD_GEN_PROPERTY = "fieldGeneration"
+RECORD_NAME_KEY = "recordName"
 
 API_VERSION = "v3.1.0"
 ODCS_SCHEMA_RESOURCE = "odcs-json-schema-v3.1.0.json"
@@ -49,6 +58,7 @@ STATUSES: frozenset[str] = frozenset({"draft", "active", "deprecated", "retired"
 CONTRACT_ID_RE = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 FIELD_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+RECORD_NAME_RE = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 
 # Names the generated Python module binds at class scope or uses in annotations; a field with one
 # of these names would shadow the type for every later field.
@@ -138,21 +148,42 @@ def schema_object(doc: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return None
 
 
-def _items_errors(prop: Mapping[str, Any]) -> list[str]:
+def _object_errors(body: Mapping[str, Any], kind: str, nested: bool) -> list[str]:
+    """Findings for a free-form object or a record body (a property or array items)."""
+    if kind == "json":
+        if body.get("properties"):
+            return ["a free-form object (json) declares no properties; use physicalType record"]
+        return []
+    if nested:
+        return ["records nest one level; a record property may not be or hold a record"]
+    properties = body.get("properties")
+    if not isinstance(properties, list) or not properties:
+        return ["a record needs at least one property"]
+    seen: set[str] = set()
+    errors: list[str] = []
+    for sub in properties:
+        errors.extend(_property_errors(sub, seen, nested=True))
+    return errors
+
+
+def _items_errors(prop: Mapping[str, Any], nested: bool) -> list[str]:
     items = prop.get("items")
     if not isinstance(items, Mapping):
         return ["array needs an 'items' mapping"]
     kind = canonical_kind(str(items.get("physicalType", "")))
     if kind not in ITEM_KINDS:
-        return [f"items.physicalType '{items.get('physicalType')}' is not a scalar kind or json"]
+        return [
+            f"items.physicalType '{items.get('physicalType')}' is not a scalar kind, json, "
+            "or record"
+        ]
     if not kind_compatible(str(items.get("logicalType", "")), kind):
         return [f"items.logicalType '{items.get('logicalType')}' cannot carry '{kind}'"]
-    if kind == "json" and items.get("properties"):
-        return ["nested object properties are not supported; use a free-form object"]
+    if kind in ("json", RECORD_KIND):
+        return _object_errors(items, kind, nested)
     return []
 
 
-def _type_errors(prop: Mapping[str, Any]) -> list[str]:
+def _type_errors(prop: Mapping[str, Any], nested: bool) -> list[str]:
     logical = str(prop.get("logicalType", ""))
     kind = canonical_kind(str(prop.get("physicalType", "")))
     if logical not in LOGICAL_TO_KINDS:
@@ -161,9 +192,32 @@ def _type_errors(prop: Mapping[str, Any]) -> list[str]:
         allowed = sorted(LOGICAL_TO_KINDS[logical])
         return [f"physicalType '{prop.get('physicalType')}' cannot carry {logical} {allowed}"]
     if kind == "array":
-        return _items_errors(prop)
-    if kind == "json" and prop.get("properties"):
-        return ["nested object properties are not supported; use a free-form object"]
+        return _items_errors(prop, nested)
+    if kind in ("json", RECORD_KIND):
+        return _object_errors(prop, kind, nested)
+    return []
+
+
+def record_name(prop: Mapping[str, Any]) -> Any:
+    """The `fieldGeneration.recordName` of a property, or None."""
+    generation = find_custom_property(prop.get("customProperties"), FIELD_GEN_PROPERTY)
+    return generation.get(RECORD_NAME_KEY) if isinstance(generation, Mapping) else None
+
+
+def _is_record(prop: Mapping[str, Any]) -> bool:
+    items = prop.get("items")
+    kinds = {canonical_kind(str(prop.get("physicalType", "")))}
+    if isinstance(items, Mapping):
+        kinds.add(canonical_kind(str(items.get("physicalType", ""))))
+    return RECORD_KIND in kinds
+
+
+def _record_name_errors(prop: Mapping[str, Any]) -> list[str]:
+    name = record_name(prop)
+    if not _is_record(prop):
+        return [] if name is None else ["fieldGeneration.recordName is only allowed on records"]
+    if not isinstance(name, str) or not RECORD_NAME_RE.match(name):
+        return [f"fieldGeneration.recordName must match {RECORD_NAME_RE.pattern}"]
     return []
 
 
@@ -201,7 +255,7 @@ def _unit_errors(prop: Mapping[str, Any], binding: Any) -> list[str]:
     return [] if kind in NUMERIC_KINDS else ["ssBinding.unit is only allowed on numeric fields"]
 
 
-def _property_errors(prop: Any, seen: set[str]) -> list[str]:
+def _property_errors(prop: Any, seen: set[str], nested: bool = False) -> list[str]:
     if not isinstance(prop, Mapping):
         return ["property must be a mapping"]
     errors = _name_errors(prop.get("name"), seen)
@@ -209,7 +263,8 @@ def _property_errors(prop: Any, seen: set[str]) -> list[str]:
         errors.append("description is required")
     if not isinstance(prop.get("required"), bool):
         errors.append("required must be set explicitly to true or false")
-    errors.extend(_type_errors(prop))
+    errors.extend(_type_errors(prop, nested))
+    errors.extend(_record_name_errors(prop))
     errors.extend(_options_errors(prop))
     binding = find_custom_property(prop.get("customProperties"), BINDING_PROPERTY)
     errors.extend(binding_errors(binding, FIELD_KEYS))
@@ -231,4 +286,14 @@ def ss_rule_errors(doc: Mapping[str, Any]) -> list[str]:
     seen: set[str] = set()
     for prop in properties:
         errors.extend(_property_errors(prop, seen))
-    return errors
+    return errors + _duplicate_record_errors(properties)
+
+
+def _duplicate_record_errors(properties: list[Any]) -> list[str]:
+    names = [
+        record_name(prop)
+        for prop in properties
+        if isinstance(prop, Mapping) and isinstance(record_name(prop), str)
+    ]
+    duplicated = sorted({name for name in names if names.count(name) > 1})
+    return [f"fieldGeneration.recordName '{name}' is used twice" for name in duplicated]

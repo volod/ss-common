@@ -1,7 +1,8 @@
 """Generate Avro record schemas (`.avsc`) for datasets and benchmarks.
 
 Types: timestamp `long` / `timestamp-micros`, date `int` / `date`, json `string` (JSON text),
-array `array`; an optional field is a `["null", T]` union with a `null` default. Bindings are
+array `array`, record a nested `record` named by its `recordName` (in the message namespace); an
+optional field is a `["null", T]` union with a `null` default. Bindings are
 kept as a field attribute `ssBinding`, which Avro's parsing canonical form ignores.
 """
 
@@ -27,10 +28,21 @@ _AVRO_TYPES: dict[str, Any] = {
 }
 
 
+def _value_type(fld: FieldSpec) -> Any:
+    if fld.is_record:
+        return {
+            "type": "record",
+            "name": fld.record_name,
+            "doc": fld.record_description,
+            "fields": [_field(sub) for sub in fld.record_fields],
+        }
+    return copy.deepcopy(_AVRO_TYPES[fld.value_kind])
+
+
 def _base_type(fld: FieldSpec) -> Any:
     if fld.kind == "array":
-        return {"type": "array", "items": copy.deepcopy(_AVRO_TYPES[str(fld.item_kind)])}
-    return copy.deepcopy(_AVRO_TYPES[fld.kind])
+        return {"type": "array", "items": _value_type(fld)}
+    return _value_type(fld)
 
 
 def _field(fld: FieldSpec) -> dict[str, Any]:

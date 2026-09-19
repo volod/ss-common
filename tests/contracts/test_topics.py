@@ -163,7 +163,12 @@ def test_committed_topic_map_resolves_every_topic_to_one_contract() -> None:
     registry = load_registry(PROJECT_CONTRACTS)
     topic_map = load_topic_map(PROJECT_CONTRACTS)
     assert topic_map is not None
-    assert {entry.contract for entry in topic_map.entries} == set(registry.entries)
+    contracts, errors = registry.load_contracts()
+    assert errors == []
+    # Every message bound to a topic is mapped; the file manifests are not messages.
+    topic_bound = {cid for cid, spec in contracts.items() if spec.binding.get("mqttTopic")}
+    assert {entry.contract for entry in topic_map.entries} == topic_bound
+    assert set(registry.entries) - topic_bound == {"mission-bundle", "model-artifact"}
     for entry in topic_map.entries:
         params = {name: f"{name}-1" for name in entry.placeholders}
         resolved = topic_map.resolve(entry.build(**params))

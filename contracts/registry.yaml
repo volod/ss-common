@@ -17,6 +17,12 @@ contracts:
   event-envelope:
     odcs: odcs/event-envelope.odcs.yaml
     owner: ss-fusion
+  mission-bundle:
+    odcs: odcs/mission-bundle.odcs.yaml
+    owner: ss-video
+  model-artifact:
+    odcs: odcs/model-artifact.odcs.yaml
+    owner: ss-fusion
   scene-caption:
     odcs: odcs/scene-caption.odcs.yaml
     owner: ss-video

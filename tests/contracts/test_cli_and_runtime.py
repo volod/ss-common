@@ -112,6 +112,8 @@ def test_models_package_exports_the_registry() -> None:
         "acoustic-observation",
         "camera-event",
         "event-envelope",
+        "mission-bundle",
+        "model-artifact",
         "scene-caption",
         "sensor-event",
         "sensor-reading",
