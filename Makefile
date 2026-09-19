@@ -17,11 +17,13 @@ unexport VIRTUAL_ENV
 export RUFF_CACHE_DIR := $(DATA_ROOT)/cache/ruff
 export MYPY_CACHE_DIR := $(DATA_ROOT)/cache/mypy
 
+CONTRACTS := "$(VENV)/bin/ss-contracts" --root "$(PROJECT_ROOT)/contracts"
+
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap venv lock format format-check lint typecheck test complexity-gate \
-	shell-lint-gate lint-doc-links lint-spec-plan plan-status footprint ci-checks ci ci-github \
-	build
+	shell-lint-gate lint-doc-links lint-spec-plan plan-status footprint contracts contracts-gen \
+	evolution-check evolution-freeze ci-checks ci ci-github build
 
 help: ## List available targets
 	@awk 'BEGIN {FS = ":.*## "; print "Usage: make <target>\n"} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -78,8 +80,22 @@ footprint: ## Fail if torch, numpy, or transformers enter the base install (aarc
 	@$(ENV) "$(PY)" -m ss_kit.quality.footprint --pyproject "$(PROJECT_ROOT)/pyproject.toml" \
 		--out "$(DATA_ROOT)/footprint"
 
+contracts: ## Validate contracts and golden fixtures; fail if the committed models drift
+	@$(CONTRACTS) validate
+	@$(CONTRACTS) generate --check
+
+contracts-gen: ## Regenerate the committed models and contracts/generated/ (every format)
+	@$(CONTRACTS) generate
+
+evolution-check: ## Enforce the version-bump policy against the reviewed baselines
+	@$(CONTRACTS) evolution-check
+
+evolution-freeze: ## Record reviewed baselines after a reviewed contract change
+	@$(CONTRACTS) evolution-freeze
+
+# contracts runs the drift gate before contracts-gen rewrites the models.
 ci-checks: format-check lint typecheck complexity-gate shell-lint-gate lint-doc-links \
-	lint-spec-plan footprint
+	lint-spec-plan footprint contracts contracts-gen evolution-check
 
 ci: bootstrap ci-checks test ## Run the required local and GitHub CI gate
 

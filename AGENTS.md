@@ -32,6 +32,9 @@ and keep only integration-specific routing.
 - Code enters `ss_kit` only when at least two service repositories use it, it holds no domain
   types, and it adds no heavy dependency.
 - `src/ss_kit/quality/` holds standard-library gates only, so they run from a bare interpreter.
+- Contracts change only in `contracts/odcs/`. Never hand-edit `src/ss_contracts/models/`: bump
+  the contract version as the evolution policy requires, run `make contracts-gen`, review, then
+  `make evolution-freeze`. Rules: [contracts](docs/impl/current/contracts.md).
 - Use named constants instead of unexplained literals and `logging` instead of `print()` in
   production code. Aim to keep Python and shell files at or below about 250 lines.
 - Runtime output belongs under `$DATA_DIR/<method>/`, never inside `src/`. Shared shell behavior

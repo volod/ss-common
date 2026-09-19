@@ -70,7 +70,10 @@ While ss-common is staged in the
 [selfsuvis repository](https://github.com/volod/selfsuvis/tree/main/projects/ss-common), its
 forward work is the `shared-foundation` group of that repository's plan: ODCS contract tooling,
 site-event contracts, mission and model-artifact manifests, and the `ss_kit` runtime helpers.
-Those capabilities enter this registry, and their tasks this plan, when ss-common is published.
+Those capabilities enter this registry, and their tasks this plan, when ss-common is published. The
+ODCS contract tooling already works here and is described under
+[current contracts](../impl/current/contracts.md); the registry holds no contracts until the
+site-event task adds them.
 
 ## Capability Registry
 

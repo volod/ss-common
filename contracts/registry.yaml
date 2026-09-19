@@ -1,0 +1,10 @@
+# ss-common contract registry. Every relative path resolves against this directory.
+# Authoring, generation, and evolution rules: docs/impl/current/contracts.md
+registryVersion: 1
+jsonSchemaIdBase: urn:ss:contracts
+# Committed Pydantic models; `make contracts` fails when they drift from the contracts.
+modelsDir: ../src/ss_contracts/models
+# JSON Schema, Protobuf, Avro, and Parquet outputs; gitignored, rebuilt by `make contracts-gen`.
+generatedDir: generated
+goldenDir: ../tests/fixtures/contracts/golden
+contracts: {}

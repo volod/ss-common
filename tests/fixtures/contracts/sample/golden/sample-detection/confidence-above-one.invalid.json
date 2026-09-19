@@ -1,0 +1,7 @@
+{
+  "camera_id": "gate-cam-1",
+  "frame_ts_s": 12.04,
+  "label": "person",
+  "confidence": 1.5,
+  "bbox_px": [120, 64, 48, 132]
+}

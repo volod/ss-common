@@ -34,3 +34,6 @@ __pycache__/
 .gemini/
 .codex-history/
 .claude-code-history/
+
+# Generated contract schemas (make contracts-gen); the Python models are committed.
+/contracts/generated/

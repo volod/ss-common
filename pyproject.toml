@@ -21,7 +21,7 @@ classifiers = [
 # The base install runs on the Pi: `make footprint` fails if torch, numpy, or transformers
 # enter its resolution for aarch64 or x86_64 Linux.
 dependencies = [
-  "pydantic>=2.7,<3",
+  "pydantic>=2.9,<3",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +38,10 @@ mqtt = [
 # Contract validation and generation (ss-contracts CLI); never needed at runtime.
 tooling = [
   "fastavro>=1.9",
+  # Hermetic protoc (and the well-known .proto includes) for compiling generated Protobuf.
+  "grpcio-tools>=1.66",
+  # Validates contracts against the vendored official ODCS JSON Schema (draft 2019-09).
+  "jsonschema>=4.18",
   "pyarrow>=16",
   "pyyaml>=6.0",
 ]
@@ -48,9 +52,12 @@ dev = [
   "radon==6.0.1",
   "ruff>=0.11,<0.17",
   "shellcheck-py==0.11.0.1",
+  "types-jsonschema>=4.18",
+  "types-pyyaml>=6.0",
 ]
 
 [project.scripts]
+ss-contracts = "ss_contracts.tooling.cli:main"
 ss-plan = "ss_kit.quality.plan_summary:main"
 
 [project.urls]
@@ -61,6 +68,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+"ss_contracts.tooling" = ["schemas/*.json", "schemas/NOTICE"]
 
 [tool.ss-split]
 # ss-common is the root of the staged-project graph: it reaches no sibling.
@@ -85,6 +93,11 @@ warn_unused_ignores = true
 warn_unreachable = true
 pretty = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+# Generation-only libraries without type information.
+module = ["fastavro.*", "grpc_tools.*", "pyarrow.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

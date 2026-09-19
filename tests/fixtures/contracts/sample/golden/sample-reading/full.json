@@ -1,0 +1,15 @@
+{
+  "dev_eui": "a84041000181c061",
+  "received_at": "2026-05-01T12:00:00.250000Z",
+  "f_cnt": 4294967296,
+  "rssi": -97,
+  "snr": 7.5,
+  "temperature_c": 21.25,
+  "motion": false,
+  "position": [48.8566, 2.3522, 35.0],
+  "tags": ["north-fence", "solar"],
+  "raw_bytes": "AQID/w==",
+  "decoded_object": {"temperature": 21.25, "flags": [1, 2], "nested": {"ok": true}},
+  "install_date": "2025-11-03",
+  "battery_v": 3.61
+}

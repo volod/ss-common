@@ -4,9 +4,10 @@
 
 | Path | Holds |
 | --- | --- |
-| `src/ss_contracts/` | Contract package (`DISTRIBUTION`, `py.typed`); contract content arrives with the contract tasks |
+| `src/ss_contracts/` | Contract package: `base` (runtime model base and wire types), committed `models/`, and `tooling/` (the `ss-contracts` CLI); see [contracts](contracts.md) |
+| `contracts/` | Contract registry, ODCS sources, evolution baselines; `contracts/generated/` is gitignored |
 | `src/ss_kit/` | Runtime-helper package: `package_version()`, `py.typed`, and `ss_kit.quality` (spec-plan, doc-link, plan-status, and footprint gates) |
-| `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests) |
+| `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree and golden messages) |
 | `scripts/shared/common.sh` | `ssc_load_env`: `.env`, `DATA_DIR`, uv and tool caches, uv link mode |
 
 Importing `ss_kit`, `ss_contracts`, or `ss_kit.quality.footprint` writes nothing to stdout or
@@ -16,14 +17,15 @@ asserts this in a fresh interpreter.
 ## Environment
 
 `pyproject.toml` declares the distribution `ss-common` 0.1.0 (setuptools, `src` layout),
-`requires-python = ">=3.11"`, the base dependency `pydantic>=2.7,<3`, and the extras:
+`requires-python = ">=3.11"`, the base dependency `pydantic>=2.9,<3` (JSON base64 bytes
+validation), the console scripts `ss-contracts` and `ss-plan`, and the extras:
 
 | Extra | Dependencies |
 | --- | --- |
 | `web` | `fastapi>=0.115`, `pyjwt[crypto]>=2.9` |
 | `mqtt` | `aiomqtt>=2.3`, `pyyaml>=6.0` |
-| `tooling` | `fastavro>=1.9`, `pyarrow>=16`, `pyyaml>=6.0` |
-| `dev` | complexipy, mypy, pytest, radon, ruff, shellcheck-py |
+| `tooling` | `fastavro>=1.9`, `grpcio-tools>=1.66` (bundled protoc), `jsonschema>=4.18`, `pyarrow>=16`, `pyyaml>=6.0` |
+| `dev` | complexipy, mypy, pytest, radon, ruff, shellcheck-py, types-jsonschema, types-pyyaml |
 
 `uv.lock` fixes the universal resolution of every extra. `make bootstrap` runs
 `uv sync --locked --all-extras --python 3.11` (`PYTHON_VERSION` overrides it). `[tool.ss-split]`
@@ -33,9 +35,10 @@ declares `siblings = []`: ss-common reaches no other staged project.
 
 `make ci` = `bootstrap`, then `format-check`, `lint` (Ruff, py311), `typecheck` (strict mypy over
 both packages), `complexity-gate` (Radon D or worse, complexipy above 15), `shell-lint-gate`
-(`bash -n` and ShellCheck), `lint-doc-links`, `lint-spec-plan`, `footprint`, and `test`.
-`ci-github` is an alias. Other targets: `format`, `lock`, `plan-status`, `build` (to
-`$DATA_DIR/dist/`). The Makefile unexports `VIRTUAL_ENV`, so an activated outer environment never
+(`bash -n` and ShellCheck), `lint-doc-links`, `lint-spec-plan`, `footprint`, `contracts`,
+`contracts-gen`, `evolution-check`, and `test`.
+`ci-github` is an alias. Other targets: `format`, `lock`, `plan-status`, `evolution-freeze`,
+`build` (to `$DATA_DIR/dist/`). The contract targets are described in [contracts](contracts.md#commands). The Makefile unexports `VIRTUAL_ENV`, so an activated outer environment never
 leaks into the project's `.venv`.
 
 ## Base footprint
@@ -64,4 +67,4 @@ gates, `uv sync --locked`, and `make -C projects/ss-common ci` for changes under
 `.env.example` declares `DATA_DIR=.data`; relative values resolve against the project root. The
 uv cache (`$DATA_DIR/uv-cache`), Ruff, mypy, pytest, and complexipy caches, footprint pins, and
 build output stay below it. `.gitignore` excludes `.venv/`, `.data/`, `.env`, caches, and root
-build outputs.
+build outputs, and `contracts/generated/`.

@@ -1,0 +1,154 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sample-reading
+version: 1.1.0
+status: active
+name: Sample sensor reading
+domain: fixtures
+description:
+  purpose: >-
+    One measurement from a field sensor node, covering every scalar kind, arrays, a free-form
+    object, constraints, and bindings.
+schema:
+  - name: sample_reading
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: utc
+          modality: lorawan
+          mqttTopic: ss/v1/site/{site_id}/sensor/{dev_eui}/reading
+      - property: schemaGeneration
+        value:
+          pydantic: {className: SampleReading}
+          avro: {namespace: ss.contracts.fixtures, recordName: SampleReading}
+          proto:
+            package: ss.contracts.fixtures.v1
+            messageName: SampleReading
+            goPackage: github.com/volod/ss-common/gen/go/fixtures/v1;fixturesv1
+    properties:
+      - name: dev_eui
+        logicalType: string
+        physicalType: string
+        required: true
+        description: LoRaWAN device EUI, 16 hex digits.
+        logicalTypeOptions: {minLength: 16, maxLength: 16, pattern: "^[0-9a-f]{16}$"}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: received_at
+        logicalType: timestamp
+        physicalType: timestamp
+        required: true
+        description: Network server receive time.
+        logicalTypeOptions: {timezone: true}
+        customProperties:
+          - property: ssBinding
+            value: {timeBase: utc}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: f_cnt
+        logicalType: integer
+        physicalType: long
+        required: true
+        description: Uplink frame counter.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 3}}
+      - name: rssi
+        logicalType: integer
+        physicalType: integer
+        required: false
+        description: Received signal strength.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: snr
+        logicalType: number
+        physicalType: float
+        required: false
+        description: Signal-to-noise ratio.
+        customProperties:
+          - property: ssBinding
+            value: {unit: dB}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: temperature_c
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Air temperature.
+        logicalTypeOptions: {minimum: -80, maximum: 80}
+        customProperties:
+          - property: ssBinding
+            value: {unit: Cel, modality: environmental}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: motion
+        logicalType: boolean
+        physicalType: bool
+        required: false
+        description: Motion detected since the previous uplink.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}
+      - name: position
+        logicalType: array
+        physicalType: array
+        required: false
+        description: Node position as latitude, longitude, altitude.
+        items: {logicalType: number, physicalType: double}
+        logicalTypeOptions: {minItems: 3, maxItems: 3}
+        customProperties:
+          - property: ssBinding
+            value: {frame: wgs84}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 8}}
+      - name: tags
+        logicalType: array
+        physicalType: array
+        required: true
+        description: Free-form labels attached by the gateway.
+        items: {logicalType: string, physicalType: string}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 9}}
+      - name: raw_bytes
+        logicalType: string
+        physicalType: bytes
+        required: false
+        description: Raw uplink payload.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 10}}
+      - name: decoded_object
+        logicalType: object
+        physicalType: json
+        required: false
+        description: Decoded payload passed through from the codec.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 11}}
+      - name: install_date
+        logicalType: date
+        physicalType: date
+        required: false
+        description: Date the node was installed.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 12}}
+      - name: battery_v
+        logicalType: number
+        physicalType: double
+        required: false
+        description: Battery voltage, added in 1.1.0.
+        logicalTypeOptions: {exclusiveMinimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: V}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 13}}

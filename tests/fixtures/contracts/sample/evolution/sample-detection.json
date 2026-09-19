@@ -1,0 +1,233 @@
+{
+  "binding": {
+    "frame": "image",
+    "modality": "camera",
+    "mqttTopic": "ss/v1/site/+/camera/{camera_id}/detection",
+    "timeBase": "media"
+  },
+  "contractId": "sample-detection",
+  "fields": {
+    "bbox_px": {
+      "binding": {
+        "frame": "image",
+        "unit": "{pixel}"
+      },
+      "items": "int",
+      "logicalType": "array",
+      "options": {
+        "maxItems": 4,
+        "minItems": 4
+      },
+      "physicalType": "array",
+      "protoFieldNumber": 6,
+      "required": true
+    },
+    "camera_id": {
+      "logicalType": "string",
+      "options": {
+        "minLength": 1
+      },
+      "physicalType": "string",
+      "protoFieldNumber": 1,
+      "required": true
+    },
+    "confidence": {
+      "logicalType": "number",
+      "options": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 5,
+      "required": true
+    },
+    "frame_ts_s": {
+      "binding": {
+        "timeBase": "media",
+        "unit": "s"
+      },
+      "logicalType": "number",
+      "options": {
+        "minimum": 0
+      },
+      "physicalType": "double",
+      "protoFieldNumber": 2,
+      "required": true
+    },
+    "label": {
+      "logicalType": "string",
+      "physicalType": "string",
+      "protoFieldNumber": 4,
+      "required": true
+    },
+    "observed_at": {
+      "items": "timestamp",
+      "logicalType": "array",
+      "physicalType": "array",
+      "protoFieldNumber": 7,
+      "required": false
+    }
+  },
+  "fingerprints": {
+    "avroParsingFingerprint": "da79e0de9cfcaf11223b6cb39226998f533712ed13ad449bb042cbfbb3364c6c"
+  },
+  "history": [
+    {
+      "binding": {
+        "frame": "image",
+        "modality": "camera",
+        "mqttTopic": "ss/v1/site/+/camera/{camera_id}/detection",
+        "timeBase": "media"
+      },
+      "contractId": "sample-detection",
+      "fields": {
+        "bbox_px": {
+          "binding": {
+            "frame": "image",
+            "unit": "{pixel}"
+          },
+          "items": "int",
+          "logicalType": "array",
+          "options": {
+            "maxItems": 4,
+            "minItems": 4
+          },
+          "physicalType": "array",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "camera_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "confidence": {
+          "logicalType": "number",
+          "options": {
+            "maximum": 1,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": true
+        },
+        "frame_ts_s": {
+          "binding": {
+            "timeBase": "media",
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "label": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "observed_at": {
+          "items": "timestamp",
+          "logicalType": "array",
+          "physicalType": "array",
+          "protoFieldNumber": 7,
+          "required": false
+        },
+        "score": {
+          "logicalType": "number",
+          "physicalType": "double",
+          "protoFieldNumber": 3,
+          "required": true
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "bca9be91916fb78d34927b706110788945d17ba1711543c3f70fd8cb3f6bfad7"
+      },
+      "version": "1.0.0"
+    },
+    {
+      "binding": {
+        "frame": "image",
+        "modality": "camera",
+        "mqttTopic": "ss/v1/site/+/camera/{camera_id}/detection",
+        "timeBase": "media"
+      },
+      "contractId": "sample-detection",
+      "fields": {
+        "bbox_px": {
+          "binding": {
+            "frame": "image",
+            "unit": "{pixel}"
+          },
+          "items": "int",
+          "logicalType": "array",
+          "options": {
+            "maxItems": 4,
+            "minItems": 4
+          },
+          "physicalType": "array",
+          "protoFieldNumber": 6,
+          "required": true
+        },
+        "camera_id": {
+          "logicalType": "string",
+          "options": {
+            "minLength": 1
+          },
+          "physicalType": "string",
+          "protoFieldNumber": 1,
+          "required": true
+        },
+        "confidence": {
+          "logicalType": "number",
+          "options": {
+            "maximum": 1,
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 5,
+          "required": true
+        },
+        "frame_ts_s": {
+          "binding": {
+            "timeBase": "media",
+            "unit": "s"
+          },
+          "logicalType": "number",
+          "options": {
+            "minimum": 0
+          },
+          "physicalType": "double",
+          "protoFieldNumber": 2,
+          "required": true
+        },
+        "label": {
+          "logicalType": "string",
+          "physicalType": "string",
+          "protoFieldNumber": 4,
+          "required": true
+        },
+        "observed_at": {
+          "items": "timestamp",
+          "logicalType": "array",
+          "physicalType": "array",
+          "protoFieldNumber": 7,
+          "required": false
+        }
+      },
+      "fingerprints": {
+        "avroParsingFingerprint": "da79e0de9cfcaf11223b6cb39226998f533712ed13ad449bb042cbfbb3364c6c"
+      },
+      "version": "2.0.0"
+    }
+  ],
+  "version": "2.0.0"
+}

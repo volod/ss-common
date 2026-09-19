@@ -1,0 +1,88 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sample-detection
+version: 2.0.0
+status: active
+name: Sample object detection
+domain: fixtures
+description:
+  purpose: One object detected in a video frame; 2.0.0 removed the legacy score field.
+schema:
+  - name: sample_detection
+    logicalType: object
+    physicalType: topic
+    customProperties:
+      - property: ssBinding
+        value:
+          timeBase: media
+          frame: image
+          modality: camera
+          mqttTopic: ss/v1/site/+/camera/{camera_id}/detection
+      - property: schemaGeneration
+        value:
+          pydantic: {className: SampleDetection}
+          avro: {namespace: ss.contracts.fixtures, recordName: SampleDetection}
+          proto:
+            package: ss.contracts.fixtures.v1
+            messageName: SampleDetection
+            reserved: [3]
+            reservedNames: [score]
+    properties:
+      - name: camera_id
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Camera that produced the frame.
+        logicalTypeOptions: {minLength: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 1}}
+      - name: frame_ts_s
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Frame offset into the video.
+        logicalTypeOptions: {minimum: 0}
+        customProperties:
+          - property: ssBinding
+            value: {unit: s, timeBase: media}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 2}}
+      - name: label
+        logicalType: string
+        physicalType: string
+        required: true
+        description: Detected class label.
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 4}}
+      - name: confidence
+        logicalType: number
+        physicalType: double
+        required: true
+        description: Detector confidence.
+        logicalTypeOptions: {minimum: 0, maximum: 1}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 5}}
+      - name: bbox_px
+        logicalType: array
+        physicalType: array
+        required: true
+        description: Bounding box as x, y, width, height.
+        items: {logicalType: integer, physicalType: int}
+        logicalTypeOptions: {minItems: 4, maxItems: 4}
+        customProperties:
+          - property: ssBinding
+            value: {frame: image, unit: "{pixel}"}
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 6}}
+      - name: observed_at
+        logicalType: array
+        physicalType: array
+        required: false
+        description: Wall-clock times the object was seen.
+        items: {logicalType: timestamp, physicalType: timestamp}
+        customProperties:
+          - property: fieldGeneration
+            value: {proto: {fieldNumber: 7}}

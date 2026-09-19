@@ -1,0 +1,14 @@
+# Fixture contract tree: exercises every type, option, binding, and output format. Tests copy it
+# to a temporary directory before generating, so models/ and generated/ never land here.
+registryVersion: 1
+jsonSchemaIdBase: urn:ss:contracts:fixtures
+modelsDir: models
+generatedDir: generated
+goldenDir: golden
+contracts:
+  sample-detection:
+    odcs: odcs/sample-detection.odcs.yaml
+    owner: ss-video
+  sample-reading:
+    odcs: odcs/sample-reading.odcs.yaml
+    owner: ss-sens
