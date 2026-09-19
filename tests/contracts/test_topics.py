@@ -6,6 +6,7 @@ import pytest
 import yaml
 
 from ss_contracts.tooling.cli import main
+from ss_contracts.tooling.generate import generate
 from ss_contracts.tooling.registry import load_registry
 from ss_contracts.tooling.topics import (
     TopicEntry,
@@ -14,6 +15,7 @@ from ss_contracts.tooling.topics import (
     patterns_overlap,
 )
 from ss_contracts.tooling.validate import validate
+from ss_contracts.topics import committed_topic_map
 
 from ._contract_fixture import custom
 from .conftest import EditContract
@@ -175,3 +177,23 @@ def test_committed_topic_map_resolves_every_topic_to_one_contract() -> None:
         assert resolved == (entry, params)
     retained = {entry.contract for entry in topic_map.entries if entry.retain}
     assert retained == {"sensor-state"}
+    runtime = committed_topic_map()
+    wire = [(entry.pattern, entry.contract, entry.qos, entry.retain) for entry in topic_map.entries]
+    assert [
+        (entry.pattern, entry.contract, entry.qos, entry.retain) for entry in runtime.entries
+    ] == wire
+
+
+@pytest.mark.usefixtures("named_detection")
+def test_generate_commits_the_runtime_topic_map(sample_root: pathlib.Path) -> None:
+    _write(sample_root, [_entry(READING, "sample-reading"), _entry(DETECTION, "sample-detection")])
+    registry = load_registry(sample_root)
+    report = generate(registry, formats=["pydantic"])
+    assert report.ok, report.errors
+    module = registry.models_dir / "topic_map.py"
+    assert module.is_file()
+    check = generate(registry, formats=["pydantic"], check=True)
+    assert check.ok and not check.drift
+    module.write_text(module.read_text(encoding="utf-8") + "# stale\n", encoding="utf-8")
+    stale = generate(registry, formats=["pydantic"], check=True)
+    assert any("topic_map.py" in finding for finding in stale.drift)

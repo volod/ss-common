@@ -19,7 +19,7 @@ exercised end to end over the sample tree in `tests/fixtures/contracts/sample/`.
 | `contracts/topics.yaml` | [Topic map](#topic-map): `ss/v1/...` pattern to contract, QoS, and retain | yes |
 | `contracts/odcs/<id>.odcs.yaml` | One ODCS contract per message | yes |
 | `contracts/evolution/<id>.json` | Reviewed baseline: latest snapshot plus `history` | yes |
-| `src/ss_contracts/models/` | Generated Pydantic models, one module per contract, and `CONTRACTS` | yes, drift-gated |
+| `src/ss_contracts/models/` | Generated Pydantic models, one module per contract, `CONTRACTS`, and `topic_map.py` | yes, drift-gated |
 | `contracts/generated/{jsonschema,avro,proto,parquet}/` | Generated schemas | no (gitignored) |
 | `tests/fixtures/contracts/golden/<id>/*.json` | Golden messages (`goldenDir`) | yes |
 | `tests/fixtures/contracts/sample/` | Sample tree for the tooling tests | yes |
@@ -291,8 +291,9 @@ string `pattern` and `contract`, a `qos` of 0, 1, or 2, and a boolean `retain` m
 unusable (exit 2). `validate` reports a malformed pattern, repeated placeholder names, a pattern
 listed twice, an unregistered contract, two patterns that can match the same concrete topic, and
 a contract whose `ssBinding.mqttTopic` is not its one mapped pattern. `TopicEntry.build(**params)`
-and `match(topic)` and `TopicMap.resolve(topic)` are the helpers the `ss_kit.mqtt` topic builder
-(`kit-runtime-core`) will wrap; a placeholder value must be one level without `/`, `+`, or `#`.
+and `match(topic)` and `TopicMap.resolve(topic)` are the helpers `ss_kit.mqtt.TopicBuilder`
+wraps over the committed `ss_contracts.models.topic_map` (no YAML at runtime); a placeholder
+value must be one level without `/`, `+`, or `#`. See [kit](kit.md#mqtt-extra).
 
 ## Evolution
 
@@ -359,7 +360,7 @@ golden fixtures is tested in the staging repository (27 site-event and 12 manife
 
 ## Result
 
-`make ci` is green on Python 3.11 and 3.13 (207 tests), and `make split-check P=ss-common`
+`make ci` is green on Python 3.11 (273 tests, including the kit suite), and `make split-check P=ss-common`
 passes in the isolated copy. Evidence: the staging repository's task records
 `0004-shared-foundation-contracts-odcs-core` (tooling),
 `0005-shared-foundation-contracts-site-events` (site-event contracts and topic map), and

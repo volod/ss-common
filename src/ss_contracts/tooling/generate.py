@@ -3,6 +3,7 @@
 | Format | Output | Committed |
 | --- | --- | --- |
 | `pydantic` | `<modelsDir>/<module>.py` and `<modelsDir>/__init__.py` | yes, drift-gated |
+| (topic map) | `<modelsDir>/topic_map.py` from `topics.yaml`, when present | yes, drift-gated |
 | `jsonschema` | `<generatedDir>/jsonschema/<id>.schema.json` | no |
 | `avro` | `<generatedDir>/avro/<id>.avsc` | no |
 | `proto` | `<generatedDir>/proto/<module>.proto`, compiled to `<module>.pb` and `<module>_pb2.py` | no |
@@ -20,8 +21,10 @@ from ss_contracts.tooling.gen import avro, jsonschema_gen, parquet, proto, pydan
 from ss_contracts.tooling.gen.checker import FORMATS, generation_errors
 from ss_contracts.tooling.odcs import ContractSpec
 from ss_contracts.tooling.registry import Registry
+from ss_contracts.tooling.topics import TopicMapError, load_topic_map, render_topic_map_module
 
 INIT_MODULE = "__init__.py"
+TOPIC_MAP_MODULE = "topic_map.py"
 
 # Suffixes each format owns inside its generated directory; stale files are removed.
 _OWNED_SUFFIXES: dict[str, tuple[str, ...]] = {
@@ -58,6 +61,17 @@ def model_sources(registry: Registry, specs: Iterable[ContractSpec]) -> dict[str
     }
     sources[INIT_MODULE] = pydantic_gen.render_package_init(specs)
     return sources
+
+
+def add_topic_map_source(registry: Registry, sources: dict[str, str]) -> list[str]:
+    """Add the runtime topic-map module when `topics.yaml` exists; errors if it is unusable."""
+    try:
+        topic_map = load_topic_map(registry.root)
+    except TopicMapError as exc:
+        return [str(exc)]
+    if topic_map is not None:
+        sources[TOPIC_MAP_MODULE] = render_topic_map_module(topic_map)
+    return []
 
 
 def model_drift(registry: Registry, sources: Mapping[str, str]) -> list[str]:
@@ -162,6 +176,9 @@ def generate(
     if report.errors:
         return report
     sources = model_sources(registry, specs)
+    report.errors += add_topic_map_source(registry, sources)
+    if report.errors:
+        return report
     if check:
         report.drift = model_drift(registry, sources)
         return report

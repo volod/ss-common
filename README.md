@@ -9,8 +9,8 @@ ss-fusion). One distribution, `ss-common`, ships two import packages:
   detection, plus the standard-library quality gates in `ss_kit.quality`.
 
 The base install depends only on pydantic, so it runs on a Raspberry Pi (Python 3.11+). Heavier
-integrations are extras: `web` (FastAPI, JWT), `mqtt` (aiomqtt), `tooling` (contract
-generation), and `dev` (tests and linters).
+integrations are extras: `web` (FastAPI, httpx, JWT), `mqtt` (aiomqtt, topic builder), `tooling`
+(contract generation), and `dev` (tests and linters).
 
 Status: staged inside the selfsuvis repository under `projects/ss-common/` until it is exported
 with its history; see the [specification](docs/design/spec.md) and

@@ -6,23 +6,24 @@
 | --- | --- |
 | `src/ss_contracts/` | Contract package: `base` (runtime model base and wire types), committed `models/`, and `tooling/` (the `ss-contracts` CLI); see [contracts](contracts.md) |
 | `contracts/` | Contract registry, ODCS sources, MQTT topic map (`topics.yaml`), evolution baselines; `contracts/generated/` is gitignored |
-| `src/ss_kit/` | Runtime-helper package: `package_version()`, `py.typed`, and `ss_kit.quality` (spec-plan, doc-link, plan-status, and footprint gates) |
-| `tests/` | `test_packages.py` (identity, silent and light import), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree, golden messages, and golden manifests) |
+| `src/ss_kit/` | Runtime-helper package: env, settings, paths, logging, security, sidecar, hardware, `web`/`mqtt` extras, `package_version()`, `py.typed`, and `ss_kit.quality`; see [kit](kit.md) |
+| `tests/` | `test_packages.py` (identity, silent and light import), `kit/` (runtime helpers), `quality/` (gate tests), `contracts/` (contract tooling), `fixtures/contracts/` (sample tree, golden messages, and golden manifests) |
 | `scripts/shared/common.sh` | `ssc_load_env`: `.env`, `DATA_DIR`, uv and tool caches, uv link mode |
 
-Importing `ss_kit`, `ss_contracts`, or `ss_kit.quality.footprint` writes nothing to stdout or
-stderr and loads none of torch, numpy, transformers, or pydantic; `tests/test_packages.py`
-asserts this in a fresh interpreter.
+Importing `ss_kit`, `ss_contracts`, `ss_kit.quality.footprint`, and the stdlib kit modules
+(`env`, `settings`, `paths`, `logging`, `security`, `hw`, `sidecar`, `mqtt`, `ss_contracts.topics`)
+writes nothing to stdout or stderr and loads none of torch, numpy, transformers, or pydantic;
+`tests/test_packages.py` asserts this in a fresh interpreter. `ss_kit.web` needs the `web` extra.
 
 ## Environment
 
 `pyproject.toml` declares the distribution `ss-common` 0.1.0 (setuptools, `src` layout),
 `requires-python = ">=3.11"`, the base dependency `pydantic>=2.9,<3` (JSON base64 bytes
-validation), the console scripts `ss-contracts` and `ss-plan`, and the extras:
+validation), the console scripts `ss-contracts`, `ss-kit`, and `ss-plan`, and the extras:
 
 | Extra | Dependencies |
 | --- | --- |
-| `web` | `fastapi>=0.115`, `pyjwt[crypto]>=2.9` |
+| `web` | `fastapi>=0.115`, `httpx>=0.27` (HTTP sidecar client), `pyjwt[crypto]>=2.9` |
 | `mqtt` | `aiomqtt>=2.3`, `pyyaml>=6.0` |
 | `tooling` | `fastavro>=1.9`, `grpcio-tools>=1.66` (bundled protoc), `jsonschema>=4.18`, `pyarrow>=16`, `pyyaml>=6.0` |
 | `dev` | complexipy, mypy, pytest, radon, ruff, shellcheck-py, types-jsonschema, types-pyyaml |

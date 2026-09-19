@@ -25,12 +25,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# FastAPI dependencies, security headers, and JWT validation (ss_kit.web).
+# FastAPI dependencies, security headers, and JWT validation (ss_kit.web); httpx for the
+# HTTP sidecar client (ss_kit.sidecar).
 web = [
   "fastapi>=0.115",
+  "httpx>=0.27",
   "pyjwt[crypto]>=2.9",
 ]
-# MQTT TLS and mTLS client settings and topic builder (ss_kit.mqtt).
+# MQTT TLS and mTLS client settings and topic builder (ss_kit.mqtt); PyYAML reads site topic
+# maps (the committed map needs no extra).
 mqtt = [
   "aiomqtt>=2.3",
   "pyyaml>=6.0",
@@ -58,6 +61,7 @@ dev = [
 
 [project.scripts]
 ss-contracts = "ss_contracts.tooling.cli:main"
+ss-kit = "ss_kit.cli:main"
 ss-plan = "ss_kit.quality.plan_summary:main"
 
 [project.urls]

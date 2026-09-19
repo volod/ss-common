@@ -71,8 +71,9 @@ While ss-common is staged in the
 forward work is the `shared-foundation` group of that repository's plan: ODCS contract tooling,
 site-event contracts, mission and model-artifact manifests, and the `ss_kit` runtime helpers.
 Those capabilities enter this registry, and their tasks this plan, when ss-common is published. The
-ODCS contract tooling, the site-event contracts, the MQTT topic map, and the manifest contracts
-already work here and are described under [current contracts](../impl/current/contracts.md).
+ODCS contract tooling, the site-event contracts, the MQTT topic map, the manifest contracts, and
+the `ss_kit` runtime helpers already work here
+([contracts](../impl/current/contracts.md), [kit](../impl/current/kit.md)).
 
 ## Capability Registry
 
