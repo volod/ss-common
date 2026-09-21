@@ -43,10 +43,15 @@ _BASE_FIELDS = frozenset({"PROJECT_ROOT", "SECRET_FIELDS"})
 def mask_secret(value: str, visible_suffix: int = 4) -> str:
     """`value` with all but the last `visible_suffix` characters replaced by `*`.
 
-    `mask_secret("")` is `<not set>`; a value no longer than the suffix keeps one character.
+    `mask_secret("")` is `<not set>`; short values keep at most one character, with at least
+    one character masked. A zero suffix masks everything; negative suffixes are rejected.
     """
+    if visible_suffix < 0:
+        raise ValueError("visible_suffix must be non-negative")
     if not value:
         return NOT_SET
+    if visible_suffix == 0 or len(value) == 1:
+        return "*" * len(value)
     if len(value) <= visible_suffix:
         return "*" * (len(value) - 1) + value[-1]
     return "*" * (len(value) - visible_suffix) + value[-visible_suffix:]
@@ -75,9 +80,10 @@ def load_layered_env(
     environ: MutableMapping[str, str] | None = None,
 ) -> dict[str, str]:
     """Apply the layered `.env` files without overriding the environment; returns what was set."""
+    env = os.environ if environ is None else environ
     layers = env_layers(
         project_root,
-        app_env=app_env,
+        app_env=app_env or env.get(APP_ENV_VAR) or DEFAULT_APP_ENV,
         package_env_dir=package_env_dir,
         root_env_files=root_env_files,
     )

@@ -33,6 +33,13 @@ comments, unquoted values ending at ` #`, single-quoted literals, double-quoted 
 multi-line values, and `${NAME}` / `${NAME:-default}` expansion. `load_env_files` applies files in
 order without overriding variables already in the process environment.
 
+`read_env_file(..., environ=...)` and `load_env_files(..., environ=...)` use the supplied mapping
+for interpolation, including an empty mapping. Later files can reference earlier layers;
+existing environment values override earlier layers during expansion. Within one file, earlier
+definitions retain precedence. Loading parses every layer before applying changes, so a malformed
+quoted value cannot leave the environment partially updated. `load_layered_env` also reads
+`APP_ENV` from the supplied mapping; explicit `app_env` takes precedence.
+
 `load_layered_env(project_root)` applies, lowest precedence first:
 
 1. `<package_env_dir>/<APP_ENV>.env` (optional packaged defaults);
@@ -45,6 +52,10 @@ body runs, so the layers load first. `masked()` redacts names that match the cre
 (`KEY`, `TOKEN`, `SECRET`, `PASSWORD`, ...) plus `SECRET_FIELDS`. Service settings classes are not
 defined here.
 
+`mask_secret` masks the entire value when `visible_suffix=0`, rejects negative suffix lengths,
+and fully masks a one-character value. Other short values retain the existing one-character
+suffix behavior.
+
 `data_dir(project_root)` resolves `$DATA_DIR` (default `.data`) against the project root.
 `data_path` rejects parts that climb out of it.
 
@@ -54,6 +65,9 @@ defined here.
 formats records as `mm:ss,mmm LEVEL leaf message` with non-ASCII characters spelled in ASCII. The
 optional `banner` is one full-date line so relative timestamps stay anchored. `get_logger` does not
 configure handlers. `stop_logging` drains the queue.
+
+ASCII conversion happens after formatting, preserving mapping interpolation keys and covering
+logger names, object representations, and exception text. Raw lines and banners are also ASCII.
 
 ## Security
 
@@ -71,6 +85,19 @@ configure handlers. `stop_logging` drains the queue.
 `load_jsonl_sidecar` reads object rows, skips blanks and invalid lines, and sorts by `t` then
 `timestamp`. `HttpSidecarClient` returns None when unconfigured; `httpx` is imported only when a
 request is made.
+
+Missing, invalid, overflowing, or non-finite timestamps sort as zero; equal-time rows retain
+file order. The first present time key takes precedence even when its value is invalid.
+
+## 0.2.0 review verification
+
+Regression coverage in `tests/kit/test_env.py`, `test_settings_paths.py`, `test_logging.py`, and
+`test_sidecar.py` exercises isolated environment mappings, layered interpolation, secret masking,
+formatted and raw ASCII logs, and invalid numeric timestamps. Existing consumer call signatures
+remain valid; applications using custom environment mappings now get that mapping consistently.
+The package metadata targets 0.2.0; consumer release pins require a published tag.
+`make ci` passes with 287 tests; 31 focused sensor, fusion, and video consumer tests also pass.
+Scope and verification limits are recorded in the [review record](../records/0001-runtime-quality-review.md).
 
 ## Hardware and `ss-kit`
 

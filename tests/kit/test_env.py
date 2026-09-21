@@ -92,6 +92,49 @@ def test_typed_getters(monkeypatch: pytest.MonkeyPatch) -> None:
     assert env_float("KIT_BAD_FLOAT", 2.0) == 2.0
 
 
+def test_load_env_files_expands_layers_in_supplied_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("OUTER", "ambient")
+    low, high = tmp_path / "low.env", tmp_path / "high.env"
+    low.write_text("BASE=low\nFIRST=${OUTER}\n", encoding="utf-8")
+    high.write_text("SECOND=${BASE}/${OUTER}\nBASE=high\n", encoding="utf-8")
+    env = {"OUTER": "supplied"}
+    assert load_env_files([low, high], environ=env) == {
+        "BASE": "high",
+        "FIRST": "supplied",
+        "SECOND": "low/supplied",
+    }
+
+
+def test_load_env_files_empty_mapping_is_isolated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("OUTER", "ambient")
+    path = tmp_path / "values.env"
+    path.write_text("RESULT=${OUTER:-fallback}\n", encoding="utf-8")
+    assert load_env_files([path], environ={}) == {"RESULT": "fallback"}
+
+
+def test_layer_expansion_preserves_environment_precedence(tmp_path: Path) -> None:
+    low, high = tmp_path / "low.env", tmp_path / "high.env"
+    low.write_text("BASE=low\n", encoding="utf-8")
+    high.write_text("RESULT=${BASE}\n", encoding="utf-8")
+    env = {"BASE": "process"}
+    assert load_env_files([low, high], environ=env) == {"RESULT": "process"}
+    assert env["BASE"] == "process"
+
+
+def test_layer_parse_failure_does_not_partially_update_environment(tmp_path: Path) -> None:
+    low, high = tmp_path / "low.env", tmp_path / "high.env"
+    low.write_text("NEW=value\n", encoding="utf-8")
+    high.write_text('BAD="unterminated', encoding="utf-8")
+    env = {"EXISTING": "unchanged"}
+    with pytest.raises(ValueError, match="unterminated"):
+        load_env_files([low, high], environ=env)
+    assert env == {"EXISTING": "unchanged"}
+
+
 def test_env_csv_parses_trimmed_values(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TEST_CSV", " alpha, beta ,gamma ")
     assert env_csv("TEST_CSV") == ["alpha", "beta", "gamma"]

@@ -123,12 +123,14 @@ def parse_env_text(text: str, *, environ: Mapping[str, str] | None = None) -> En
     return values
 
 
-def read_env_file(path: str | os.PathLike[str]) -> EnvValues:
+def read_env_file(
+    path: str | os.PathLike[str], *, environ: Mapping[str, str] | None = None
+) -> EnvValues:
     """Values of one `.env` file; an absent file yields no values."""
     candidate = Path(path)
     if not candidate.is_file():
         return {}
-    return parse_env_text(candidate.read_text(encoding="utf-8"))
+    return parse_env_text(candidate.read_text(encoding="utf-8"), environ=environ)
 
 
 def load_env_files(
@@ -138,12 +140,16 @@ def load_env_files(
 ) -> dict[str, str]:
     """Apply `.env` files in order (later wins) without overriding existing variables.
 
+    Expansion uses the supplied environment and earlier layers, with environment values
+    taking precedence over earlier layers. Earlier definitions within a file still win.
     Returns the variables this call set. A key declared without a value is set to `""`.
     """
     env = os.environ if environ is None else environ
     merged: EnvValues = {}
     for path in paths:
-        merged.update(read_env_file(path))
+        context = {key: value if value is not None else "" for key, value in merged.items()}
+        context.update(env)
+        merged.update(read_env_file(path, environ=context))
     applied: dict[str, str] = {}
     for key, value in merged.items():
         if key not in env:

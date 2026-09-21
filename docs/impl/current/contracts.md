@@ -295,6 +295,11 @@ and `match(topic)` and `TopicMap.resolve(topic)` are the helpers `ss_kit.mqtt.To
 wraps over the committed `ss_contracts.models.topic_map` (no YAML at runtime); a placeholder
 value must be one level without `/`, `+`, or `#`. See [kit](kit.md#mqtt-extra).
 
+Map metadata requires integer `topicsVersion` and `qos` values, excluding booleans and floats.
+List or mapping QoS values raise `TopicMapError` instead of an incidental `TypeError`.
+`tests/contracts/test_topics.py` covers these cases; contract definitions and wire versions
+are unchanged by this validation fix.
+
 ## Evolution
 
 A snapshot records the version, the message binding, and per field the logical type, kind, item

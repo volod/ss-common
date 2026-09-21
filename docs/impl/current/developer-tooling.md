@@ -17,7 +17,7 @@ writes nothing to stdout or stderr and loads none of torch, numpy, transformers,
 
 ## Environment
 
-`pyproject.toml` declares the distribution `ss-common` 0.1.0 (setuptools, `src` layout),
+`pyproject.toml` declares the distribution `ss-common` 0.2.0 (setuptools, `src` layout),
 `requires-python = ">=3.11"`, the base dependency `pydantic>=2.9,<3` (JSON base64 bytes
 validation), the console scripts `ss-contracts`, `ss-kit`, and `ss-plan`, and the extras:
 

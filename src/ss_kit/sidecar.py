@@ -5,6 +5,7 @@
 
 import json
 import logging
+import math
 from pathlib import Path
 from typing import Any
 
@@ -23,8 +24,9 @@ def _row_time(row: dict[str, Any]) -> float:
     for key in TIME_KEYS:
         if key in row:
             try:
-                return float(row[key] or 0.0)
-            except (TypeError, ValueError):
+                value = float(row[key] or 0.0)
+                return value if math.isfinite(value) else 0.0
+            except (TypeError, ValueError, OverflowError):
                 return 0.0
     return 0.0
 
