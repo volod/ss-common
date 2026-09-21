@@ -9,4 +9,4 @@ Next unused sequence: `0002`.
 
 | Record | Scope | Result |
 | --- | --- | --- |
-| [Runtime quality review](0001-runtime-quality-review.md) | Runtime helpers, MQTT validation, 0.2.0 candidate | 287 library tests and 31 focused consumer tests passed; awaiting commit review |
+| [Runtime quality review](0001-runtime-quality-review.md) | Runtime helpers, MQTT validation, release review | Committed as `2441352`; 287 library tests and 31 focused consumer tests passed |

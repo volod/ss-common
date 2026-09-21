@@ -17,7 +17,7 @@ writes nothing to stdout or stderr and loads none of torch, numpy, transformers,
 
 ## Environment
 
-`pyproject.toml` declares the distribution `ss-common` 0.2.0 (setuptools, `src` layout),
+`pyproject.toml` declares the distribution `ss-common` 0.2.1 (setuptools, `src` layout),
 `requires-python = ">=3.11"`, the base dependency `pydantic>=2.9,<3` (JSON base64 bytes
 validation), the console scripts `ss-contracts`, `ss-kit`, and `ss-plan`, and the extras:
 
@@ -31,6 +31,13 @@ validation), the console scripts `ss-contracts`, `ss-kit`, and `ss-plan`, and th
 `uv.lock` fixes the universal resolution of every extra. `make bootstrap` runs
 `uv sync --locked --all-extras --python 3.11` (`PYTHON_VERSION` overrides it). `[tool.ss-split]`
 declares `siblings = []`: ss-common reaches no other staged project.
+
+The README's consumer source example pins `v0.2.1`, matching `pyproject.toml`, `uv.lock`, and
+the installed-version assertion in `tests/test_packages.py`. Release preparation passed
+`make ci` (287 tests, two upstream warnings) and `make build`; the wheel and source archive
+report 0.2.1, with Python >=3.11 and only pydantic in the base requirements. The local release
+commit and tag are pending explicit commit authorization; consumers need the tag on the Git
+remote. Review scope and evidence are in the [runtime review record](../records/0001-runtime-quality-review.md#follow-up-release-review).
 
 ## Make targets
 

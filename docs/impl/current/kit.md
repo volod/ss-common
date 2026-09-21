@@ -89,13 +89,14 @@ request is made.
 Missing, invalid, overflowing, or non-finite timestamps sort as zero; equal-time rows retain
 file order. The first present time key takes precedence even when its value is invalid.
 
-## 0.2.0 review verification
+## Runtime review verification
 
 Regression coverage in `tests/kit/test_env.py`, `test_settings_paths.py`, `test_logging.py`, and
 `test_sidecar.py` exercises isolated environment mappings, layered interpolation, secret masking,
 formatted and raw ASCII logs, and invalid numeric timestamps. Existing consumer call signatures
 remain valid; applications using custom environment mappings now get that mapping consistently.
-The package metadata targets 0.2.0; consumer release pins require a published tag.
+The fixes were committed in `2441352` with package version 0.2.0. The release metadata and
+README installation example now target 0.2.1; consumer pins require the tag on the Git remote.
 `make ci` passes with 287 tests; 31 focused sensor, fusion, and video consumer tests also pass.
 Scope and verification limits are recorded in the [review record](../records/0001-runtime-quality-review.md).
 

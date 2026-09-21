@@ -3,7 +3,7 @@
 ## Task and scope
 
 - Source: ad hoc user request; baseline `4493f66`, initially clean ss-common tree.
-- State: implemented and verified; awaiting user review before commit.
+- State: implemented and verified in commit `2441352`; follow-up release review below.
 - Plan counts at start: 0 agent tasks, 0 human tasks; no eligible task in either lane.
 - Accepted request:
 
@@ -22,9 +22,9 @@ This is a shared library for https://github.com/volod/ss-fusion, https://github.
 - JSONL sidecar times that overflow or are non-finite sort stably as zero.
 - Topic map version and QoS require integers, rejecting boolean, float, and unhashable inputs
   with TopicMapError. Contract definitions, generated models, and wire versions are unchanged.
-- Package metadata and uv.lock target 0.2.0, with no dependency version changes. No commit,
-  push, or tag is made. Consumer source interfaces need no refactor for these fixes; published
-  dependency pins remain v0.1.0 until the user reviews and releases the candidate.
+- The original review targeted package version 0.2.0, with no dependency version changes.
+  It made no commit, push, or tag. Consumer source interfaces needed no refactor for these fixes;
+  dependency pins remained v0.1.0 at that handoff.
 
 Current behavior: [runtime helpers](../current/kit.md), [contracts](../current/contracts.md),
 and [developer tooling](../current/developer-tooling.md).
@@ -59,6 +59,39 @@ bounded to reproducible defects; this is not an exhaustive security audit. Exist
 fusion and video edits were preserved. No new dependencies or service processes were introduced.
 
 Plan counts remain 0 agent and 0 human tasks; no registered capability changed status.
-Release creation and consumer pin updates are intentionally left to the user's commit review.
+At the original handoff, release creation and consumer pin updates were left to the user's
+commit review.
 Final diff inspection found only intended ss-common changes, with no generated-model drift.
 All test commands finished or were interrupted; no service, port, or background worker remains.
+
+## Follow-up release review
+
+Accepted request:
+
+```text
+please review docs/impl/records/0001-runtime-quality-review.md with xhigh effort, create tag v0.2.1, update README.md example using tag v0.2.1
+```
+
+- Reviewed the changes in `2441352` against baseline `4493f66`, the regression tests, and the
+  current-state documentation. No new runtime defect was found in the changed code.
+- Corrected the stale awaiting-commit status. The existing commit declares 0.2.0, so tagging
+  it directly as v0.2.1 would leave the installed distribution reporting 0.2.0. Prepared
+  matching 0.2.1 package metadata, lockfile, identity assertion, README pin, and current docs.
+  Dependency versions and runtime code are unchanged.
+- Replayed all 14 added regression cases against temporary baseline sources: eight runtime
+  cases and five topic-map cases failed; the atomic-loading case already passed. All 14 pass
+  against the current sources. Logs remain under `$DATA_DIR/review-v0.2.1/`; the temporary
+  baseline sources were removed. This replay also includes the environment-precedence case
+  added after the original regression-first run.
+- `make ci` passed on the reviewed commit and again after the version preparation: 287 tests,
+  two upstream deprecation warnings, five base dependencies on each architecture, and no
+  contract or generated-model drift. Package-index checks required network-enabled execution
+  after sandbox DNS resolution failed.
+- `make build` produced the 0.2.1 wheel and source archive under `$DATA_DIR/dist/`. Inspection
+  confirmed matching versions, Python >=3.11, the pydantic-only base requirement, both typed
+  packages, the generated topic map, and the README's v0.2.1 pin in the wheel metadata.
+- The earlier 31 focused consumer results remain historical evidence; consumer tests were
+  not rerun for this metadata and documentation change.
+- Plan counts remain 0 agent and 0 human tasks; no capability changed status. A release commit
+  needs explicit user authorization under AGENTS.md before the local v0.2.1 tag can include
+  the prepared changes. No push or consumer pin change is part of this follow-up.

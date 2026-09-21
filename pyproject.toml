@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ss-common"
-version = "0.2.0"
+version = "0.2.1"
 description = "Shared contracts (ss_contracts) and light runtime helpers (ss_kit) for the ss services"
 readme = "README.md"
 # Raspberry Pi OS Bookworm ships Python 3.11; the edge tier installs this package there.
