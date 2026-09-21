@@ -7,7 +7,7 @@ import ss_kit
 
 def test_distribution_identity() -> None:
     assert ss_kit.DISTRIBUTION == ss_contracts.DISTRIBUTION == "ss-common"
-    assert ss_kit.package_version() == "0.1.0"
+    assert ss_kit.package_version() == "0.2.0"
 
 
 def test_import_is_silent_and_light() -> None:

@@ -88,3 +88,10 @@ def test_unwrap_dict_payload() -> None:
     assert HttpSidecarClient.unwrap_dict_payload({"a": 1}) == {"a": 1}
     assert HttpSidecarClient.unwrap_dict_payload({"pose": {"x": 1}}, field="pose") == {"x": 1}
     assert HttpSidecarClient.unwrap_dict_payload({"pose": 3}, field="pose") == {"pose": 3}
+
+
+def test_sidecar_invalid_numeric_times_sort_as_zero(tmp_path: Path) -> None:
+    path = tmp_path / "times.jsonl"
+    times = [2, "nan", "inf", "-inf", 10**400, 1]
+    path.write_text("\n".join(json.dumps({"t": t, "i": i}) for i, t in enumerate(times)))
+    assert [row["i"] for row in load_jsonl_sidecar(path)] == [1, 2, 3, 4, 5, 0]

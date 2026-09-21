@@ -20,6 +20,20 @@ def test_mask_secret() -> None:
     assert mask_secret("abcdef", visible_suffix=2) == "****ef"
 
 
+def test_mask_secret_zero_suffix_and_single_character() -> None:
+    assert mask_secret("abcdef", visible_suffix=0) == "******"
+    assert mask_secret("x") == "*"
+    with pytest.raises(ValueError, match="non-negative"):
+        mask_secret("abcdef", visible_suffix=-1)
+
+
+def test_layered_env_uses_supplied_app_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "ambient")
+    (tmp_path / "test.env").write_text("SELECTED=yes\n", encoding="utf-8")
+    env = {"APP_ENV": "test"}
+    assert load_layered_env(tmp_path, package_env_dir=tmp_path, environ=env) == {"SELECTED": "yes"}
+
+
 @pytest.mark.parametrize(
     ("name", "secret"),
     [

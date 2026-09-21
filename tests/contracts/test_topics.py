@@ -100,11 +100,16 @@ def test_topic_map_findings(sample_root: pathlib.Path, case: str) -> None:
 
 UNUSABLE: dict[str, tuple[Any, Any, str]] = {
     "version": ([], 2, "topicsVersion must be 1"),
+    "version bool": ([], True, "topicsVersion must be 1"),
+    "version float": ([], 1.0, "topicsVersion must be 1"),
     "topics type": ({}, 1, "'topics' must be a list"),
     "entry type": (["x"], 1, "topics[0] must be a mapping"),
     "pattern type": ([{"contract": "sample-reading"}], 1, "needs string 'pattern'"),
     "qos range": ([_entry(READING, "sample-reading", qos=3)], 1, "qos must be 0, 1, or 2"),
     "qos bool": ([_entry(READING, "sample-reading", qos=True)], 1, "qos must be 0, 1, or 2"),
+    "qos float": ([_entry(READING, "sample-reading", qos=1.0)], 1, "qos must be 0, 1, or 2"),
+    "qos list": ([_entry(READING, "sample-reading", qos=[])], 1, "qos must be 0, 1, or 2"),
+    "qos mapping": ([_entry(READING, "sample-reading", qos={})], 1, "qos must be 0, 1, or 2"),
     "retain": ([_entry(READING, "sample-reading", retain="yes")], 1, "retain must be true"),
     "description": ([_entry(READING, "sample-reading", description=1)], 1, "description must"),
 }

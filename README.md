@@ -28,6 +28,10 @@ ss-common = { git = "https://github.com/volod/ss-common", tag = "v0.1.0" }
 
 While staged, sibling projects use `ss-common = { path = "../ss-common" }`.
 
+The working tree targets 0.2.0. The example above retains the published v0.1.0 pin until
+0.2.0 is reviewed, committed, and tagged; package metadata alone does not publish a release.
+The runtime fixes and migration behavior are described in [runtime helpers](docs/impl/current/kit.md).
+
 ## Develop
 
 Requirements: Git, Make, and [uv](https://docs.astral.sh/uv/).

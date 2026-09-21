@@ -62,12 +62,7 @@ class CompactFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         copy = logging.makeLogRecord(record.__dict__)
         copy.name = record.name.split(".")[-1]
-        copy.msg = ascii_log_text(copy.msg)
-        if isinstance(copy.args, dict):
-            copy.args = {key: ascii_log_text(value) for key, value in copy.args.items()}
-        elif copy.args:
-            copy.args = tuple(ascii_log_text(arg) for arg in copy.args)
-        return super().format(copy)
+        return str(ascii_log_text(super().format(copy)))
 
 
 class _State:
@@ -94,7 +89,7 @@ def stop_logging() -> None:
 def write_line(text: str) -> None:
     """Write one raw line to the configured sink (stderr before configuration)."""
     stream = _State.sink.stream if _State.sink is not None else sys.stderr
-    stream.write(f"{text}\n")
+    stream.write(f"{ascii_log_text(text)}\n")
     stream.flush()
 
 

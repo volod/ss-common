@@ -108,7 +108,7 @@ def _entry(index: int, item: Any) -> TopicEntry:
     if not isinstance(pattern, str) or not isinstance(contract, str):
         raise TopicMapError(f"{where} needs string 'pattern' and 'contract'")
     qos, retain = item.get("qos"), item.get("retain")
-    if isinstance(qos, bool) or qos not in QOS_LEVELS:
+    if type(qos) is not int or qos not in QOS_LEVELS:
         raise TopicMapError(f"{where}: qos must be 0, 1, or 2")
     if not isinstance(retain, bool):
         raise TopicMapError(f"{where}: retain must be true or false")
@@ -121,7 +121,11 @@ def _entry(index: int, item: Any) -> TopicEntry:
 def topic_map_from_document(doc: Any, path: pathlib.Path | None = None) -> TopicMap:
     """A topic map from a parsed `topics.yaml` document; `TopicMapError` when unusable."""
     where = path if path is not None else TOPICS_FILENAME
-    if not isinstance(doc, Mapping) or doc.get("topicsVersion") != TOPICS_VERSION:
+    if (
+        not isinstance(doc, Mapping)
+        or type(doc.get("topicsVersion")) is not int
+        or doc["topicsVersion"] != TOPICS_VERSION
+    ):
         raise TopicMapError(f"{where}: topicsVersion must be {TOPICS_VERSION}")
     topics = doc.get("topics")
     if not isinstance(topics, list):

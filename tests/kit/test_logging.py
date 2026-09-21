@@ -79,6 +79,25 @@ def test_force_replaces_the_configuration() -> None:
     assert logging.getLogger().handlers == []
 
 
+def test_formatter_sanitizes_final_output_without_breaking_mapping_keys() -> None:
+    record = logging.LogRecord("svc.\u00e9", logging.INFO, __file__, 1, "%(\u00e9)s", None, None)
+    record.args = {"\u00e9": {"value": "\u00e9"}}
+    record.exc_text = "ValueError: \u00e9"
+    formatted = kit_logging.CompactFormatter("%(name)s %(message)s").format(record)
+    assert formatted.isascii()
+    assert "ValueError: ?" in formatted
+    assert record.msg == "%(\u00e9)s"
+
+
+def test_raw_logging_is_ascii() -> None:
+    stream = io.StringIO()
+    kit_logging.configure_logging(stream=stream, banner="\u00e9")
+    kit_logging.write_line("done \u2192")
+    kit_logging.stop_logging()
+    assert stream.getvalue().isascii()
+    assert "done ->" in stream.getvalue()
+
+
 def test_import_and_get_logger_write_nothing() -> None:
     probe = (
         "import logging, ss_kit.logging as kl;"
